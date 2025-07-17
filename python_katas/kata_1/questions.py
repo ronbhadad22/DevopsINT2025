@@ -6,13 +6,14 @@ def sum_of_element(elements):
     :return: Return int - the sum of all elements.
     """
     # elements=[1,2]
-    sum=0
+    sum = 0
 
     for moshe in elements:
         print(moshe)
-        sum=sum+moshe
+        sum = sum+moshe
 
     return sum
+
 
 def verbing(word):
     """
@@ -30,7 +31,13 @@ def verbing(word):
     :param word: str
     :return: Return the resulting string.
     """
-    return None
+
+    if len(word) < 3:
+        return word
+    elif word.endswith("ing"):
+        return word + "ly"
+    else:
+        return word + "ing"
 
 
 def words_concatenation(words):
@@ -45,7 +52,8 @@ def words_concatenation(words):
     :param words: list of str
     :return: Return the resulting string.
     """
-    return None
+
+    return ' '.join(words)
 
 
 def reverse_words_concatenation(words):
@@ -60,7 +68,8 @@ def reverse_words_concatenation(words):
     :param words: list of str
     :return: Return the resulting string.
     """
-    return None
+
+    return ' '.join(reversed(words))
 
 
 def is_unique_string(some_str):
@@ -77,7 +86,8 @@ def is_unique_string(some_str):
     :param some_str:
     :return: bool
     """
-    return None
+
+    return len(set(some_str)) == len(some_str)
 
 
 def list_diff(elements):
@@ -95,7 +105,14 @@ def list_diff(elements):
     :param elements: list of integers
     :return: the diff list
     """
-    return None
+
+    if not elements:
+        return []
+
+    diffs = [None]
+    for i in range(1, len(elements)):
+        diffs.append(elements[i] - elements[i-1])
+    return diffs
 
 
 def prime_number(num):
@@ -108,7 +125,13 @@ def prime_number(num):
     :param num: the number to check
     :return: bool. True if prime, else False
     """
-    return None
+
+    if num <= 1:
+        return False
+    for i in range(2, int(num ** 0.50) + 1):
+        if num % i == 0:
+            return False
+    return True
 
 
 def palindrome_num(num):
@@ -124,7 +147,10 @@ def palindrome_num(num):
     :param num: int
     :return: bool. True is palindrome, else False
     """
-    return None
+
+    str_num = str(num)
+
+    return str_num == str_num[::-1]
 
 
 def pair_match(men, women):
@@ -155,7 +181,17 @@ def pair_match(men, women):
     :param women: dict mapping name -> age
     :return: tuple (men_name, women_name) such their age absolute difference is the minimal
     """
-    return None
+    min_diff = float('inf')
+    best_pair = (None, None)
+
+    for man_name, man_age in men.items():
+        for woman_name, woman_age in women.items():
+            diff = abs(man_age - woman_age)
+            if diff < min_diff:
+                min_diff = diff
+                best_pair = (man_name, woman_name)
+
+    return best_pair
 
 
 def bad_average(a, b, c):
@@ -167,7 +203,7 @@ def bad_average(a, b, c):
 
     :return:
     """
-    return a + b + c / 3
+    return (a + b + c) / 3
 
 
 def best_student(grades):
@@ -190,7 +226,7 @@ def best_student(grades):
     :param grades: dict of name -> grade mapping
     :return: str. some key from the dict
     """
-    return None
+    return max(grades, key=grades.get)
 
 
 def print_dict_as_table(some_dict):
@@ -220,6 +256,11 @@ def print_dict_as_table(some_dict):
     :return:
     """
 
+    print("Key     Value")
+    print("-------------")
+    for key, value in some_dict.items():
+        print(f"{key:<8}{value}")
+
     return None
 
 
@@ -240,6 +281,9 @@ def merge_dicts(dict1, dict2):
     :param dict2:
     :return:
     """
+
+    dict1.update(dict2)
+
     return dict1
 
 
@@ -255,7 +299,12 @@ def seven_boom(n):
     :param n: int. The last number for count for a 7-boom play
     :return: list of integers
     """
-    return None
+
+    result = []
+    for num in range(1, n + 1):
+        if num % 7 == 0 or '7' in str(num):
+            result.append(num)
+    return result
 
 
 def caesar_cipher(str_to_encrypt):
@@ -270,7 +319,20 @@ def caesar_cipher(str_to_encrypt):
 
     :return:
     """
-    return None
+
+    result = []
+
+    for ch in str_to_encrypt:
+        if ch == ' ':
+            result.append(ch)
+        elif 'a' <= ch <= 'z':
+            shifted = chr((ord(ch) - ord('a') + 3) % 26 + ord('a'))
+            result.append(shifted)
+        elif 'A' <= ch <= 'Z':
+            shifted = chr((ord(ch) - ord('A') + 3) % 26 + ord('A'))
+            result.append(shifted)
+
+    return ''.join(result)
 
 
 def sum_of_digits(digits_str):
@@ -288,7 +350,8 @@ def sum_of_digits(digits_str):
     :param digits_str: str of numerical digits only
     :return: int representing the sum of digits
     """
-    return None
+
+    return sum(int(digit) for digit in digits_str)
 
 
 if __name__ == '__main__':
@@ -368,4 +431,3 @@ if __name__ == '__main__':
     #
     # print('\nsum_of_digits:\n--------------------')
     # print(sum_of_digits('1223432'))
-
