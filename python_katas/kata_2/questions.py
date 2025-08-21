@@ -1,93 +1,69 @@
+
+
 def valid_parentheses(s):
-    """
-    3 Kata
+    prev = None
+    while prev != s:  
+        prev = s
+        s = s.replace("()", "").replace("[]", "").replace("{}", "")
+    return s == ""
 
-    This function gets a string containing just the characters '(', ')', '{', '}', '[' and ']',
-    and determines if the input string is valid.
-
-    An input string is valid if:
-        Open brackets must be closed by the same type of brackets.
-        Open brackets must be closed in the correct order.
-
-    e.g.
-    s = '[[{()}](){}]'  -> True
-    s = ']}'          -> False
-    """
-    pass
 
 
 def fibonacci_fixme(n):
-    """
-    2 Kata
+    if n == 1 or n == 2:
+        return 1
+    a, b = 1, 1
+    for _ in range(3, n + 1):
+        a, b = b, a + b
+    return b
 
-    A Fibonacci sequence is the integer sequence of 1, 1, 2, 3, 5, 8, 13....
-    The first two terms are 1 and 1. All other terms are obtained by adding the preceding two terms.
-
-    This function should return the n'th element of fibonacci sequence. As following:
-
-    fibonacci_fixme(1) -> 1
-    fibonacci_fixme(2) -> 1
-    fibonacci_fixme(3) -> 2
-    fibonacci_fixme(4) -> 3
-    fibonacci_fixme(5) -> 5
-
-    But it doesn't (it has some bad lines in it...)
-    You should (1) correct the for statement and (2) swap two lines, so that the correct fibonacci element will be returned
-    """
-    pass
-
+import os
 
 def most_frequent_name(file_path):
-    """
-    2 Kata
+    from collections import Counter
+    base_dir = os.path.dirname(__file__)
+    full_path = os.path.join(base_dir, file_path)
+    with open(full_path, "r") as file:
+        names = [line.strip() for line in file]
+    name_counts = Counter(names)
+    return name_counts.most_common(1)[0][0]
 
-    This function gets a path to a file containing names (name in each line)
-    The function should return the most frequent name in the file
 
-    You can assume file_path exists in the file system
 
-    :param file_path: str - absolute or relative file to read names from
-    :return: str - the mose frequent name. If there are many, return one of them
-    """
-    return None
 
+
+import tarfile
+from datetime import date
 
 def files_backup(dir_path):
-    """
-    3 Kata
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    dir_path = os.path.join(base_dir, dir_path)
+    dir_name = os.path.basename(os.path.normpath(dir_path))
+    today_str = date.today().strftime("%Y-%m-%d")
+    backup_filename = f"backup_{dir_name}_{today_str}.tar.gz"
+    with tarfile.open(backup_filename, "w:gz") as tar:
+        tar.add(dir_path, arcname=dir_name)
+    return backup_filename
 
-    This function gets a path to a directory and generated a .gz file containing all the files the directory contains
-    The backup .gz file name should be in the form:
 
-    'backup_<dir_name>_<yyyy-mm-dd>.tar.gz'
 
-    Where <dir_name> is the directory name (only the directory, not the full path given in dir_path)
-    and <yyyy-mm-dd> is the date e.g. 2022-04-10
 
-    You can assume dir_path exists in the file system
-
-    :param dir_path: string - path to a directory
-    :return: str - the backup file name
-    """
-    return None
 
 
 
 def replace_in_file(file_path, text, replace_text):
-    """
-    2 Kata
-    This function gets a path of text file, it replaces all occurrences of 'text' by 'replace_text'.
-    The function saves the replaces content on the same path (overwrites the file's content)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    abs_path = os.path.join(base_dir, file_path)
+    if not os.path.exists(abs_path):
+        raise FileNotFoundError(f"The file does not exist.\nLooked for: {abs_path}")
+    with open(abs_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    new_content = content.replace(text, replace_text)
+    with open(abs_path, "w", encoding="utf-8") as f:
+        f.write(new_content)
 
-    You MUST check that file_path exists in the file system before you try to open it
 
-    :param file_path: relative or absolute path to a text file
-    :param text: text to search
-    :param replace_text: text to replace with
-    :return: None
-    """
-    return None
-    
+
 
 def json_configs_merge(*json_paths):
     """
@@ -104,129 +80,106 @@ def json_configs_merge(*json_paths):
 
 
 def monotonic_array(lst):
-    """
-    1 Kata
+    if len(lst) < 2:
+        return True
 
-    This function returns True/False if the given list is monotonically increased or decreased
+    increasing = decreasing = True
 
-    :param lst: list of numbers (int, floats)
-    :return: bool: indicating for monotonicity
-    """
-    return None
+    for i in range(1, len(lst)):
+        if lst[i] > lst[i-1]:
+            decreasing = False
+        elif lst[i] < lst[i-1]:
+            increasing = False
+        if not increasing and not decreasing:
+            return False
+
+    return True
 
 
 def matrix_avg(mat, rows=None):
-    """
-    2 Kata
-
-    This function gets a 3*3 matrix (list of 3 lists) and returns the average of all elements
-    The 'rows' optional argument (with None as default) indicating which rows should be included in the average calculation
-
-    :param mat: 3*3 matrix
-    :param rows: list of unique integers in the range [0, 2] and length of maximum 3
-    :return: int - the average values
-    """
-    return None
+    if rows is None:
+        rows = [0, 1, 2]
+    total = 0
+    count = 0
+    for r in rows:
+        for value in mat[r]:
+            total += value
+            count += 1
+    return total // count
 
 
 def merge_sorted_lists(l1, l2):
-    """
-    1 Kata
+    result = []
+    i, j = 0, 0
+    while i < len(l1) and j < len(l2):
+        if l1[i] < l2[j]:
+            result.append(l1[i])
+            i += 1
+        else:
+            result.append(l2[j])
+            j += 1
+    result.extend(l1[i:])
+    result.extend(l2[j:])
+    return result
 
-    This function gets two sorted lists (each one of them is sorted)
-    and returns a single sorted list combining both of them.
-
-    Try to be as efficient as you can (hint - don't use Python's built in sort() or sorted() functions)
-
-    :param l1: list of integers
-    :param l2: list of integers
-    :return: list: sorted list combining l1 and l2
-    """
-    return None
 
 
 def longest_common_substring(str1, str2):
-    """
-    4 Kata
+    m, n = len(str1), len(str2)
+    dp = [[0]*(n+1) for _ in range(m+1)]
+    max_len = 0
+    end_idx = 0  
 
-    This functions gets two strings and returns their longest common substring
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            if str1[i-1] == str2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+                if dp[i][j] > max_len:
+                    max_len = dp[i][j]
+                    end_idx = i
+            else:
+                dp[i][j] = 0
 
-    e.g. for
-    str1 = 'Introduced in 1991, The Linux kernel is an amazing software'
-    str2 = 'The Linux kernel is a mostly free and open-source, monolithic, modular, multitasking, Unix-like operating system kernel.'
-
-    The returned value would be 'The Linux kernel is a'
-    since it's the longest string contained both in str1 and str2
-
-    :param str1: str
-    :param str2: str
-    :return: str - the longest common substring
-    """
-    return None
+    return str1[end_idx - max_len:end_idx]
 
 
 def longest_common_prefix(str1, str2):
-    """
-    1 Kata
+    min_len = min(len(str1), len(str2))
+    i = 0
+    while i < min_len and str1[i] == str2[i]:
+        i += 1
+    return str1[:i]
 
-    This functions gets two strings and returns their longest common prefix
-
-    e.g. for
-    str1 = 'The Linux kernel is an amazing software'
-    str2 = 'The Linux kernel is a mostly free and open-source, monolithic, modular, multitasking, Unix-like operating system kernel.'
-
-    The returned value would be 'The Linux kernel is a'
-
-    :param str1: str
-    :param str2: str
-    :return: str - the longest common prefix
-    """
-    return None
 
 
 def rotate_matrix(mat):
-    """
-    2 Kata
+    if not mat:
+        return []
+    n = len(mat)
+    m = len(mat[0])
+    rotated = [[0] * n for _ in range(m)]
+    for i in range(m):
+        for j in range(n):
+            rotated[i][j] = mat[n - 1 - j][i]
+    return rotated
 
-    This function gets a matrix n*m (list of m lists of length n) and rotate the matrix clockwise
-    e.g.
-    for [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]] which represent the matrix
 
-    1   2   3
-    4   5   6
-    7   8   9
-    10  11  12
 
-    The output should be:
-    [[10, 7, 4, 1], [11, 8, 5, 2], [12, 9, 6, 3]]
-
-    10  7   4   1
-    11  8   5   2
-    12  9   6   3
-
-    :param mat:
-    :return: list of lists - rotate matrix
-    """
-    return None
-
+import re
+import socket
 
 def is_valid_email(mail_str):
-    """
-    3 Kata
+    if '@' not in mail_str:
+        return False
+    username, domain = mail_str.split('@', 1)
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._]*$', username):
+        return False
+    try:
+        socket.gethostbyname(domain)
+    except socket.gaierror:
+        return False
+    return True
 
-    This function returns True if the given mail is in the form:
-    (username)@(domainname)
-
-    Where
-    * (username) must start with digit or an English character, and can contains only 0-9 a-z A-Z . or _
-    * (domainname) is a real, existed domain - one that resolves to an actual ip address
-
-    Hint: use socket.gethostbyname() to resolve a DNS in Python code
-
-    :param mail_str: mail to check
-    :return: bool: True if it's a valid mail (otherwise either False is returned or the program can crash)
-    """
-    return None
 
 
 def pascal_triangle(lines):
@@ -266,20 +219,14 @@ def pascal_triangle(lines):
 
 
 def list_flatten(lst):
-    """
-    2 Kata
+    flat_list = []
+    for item in lst:
+        if isinstance(item, list):
+            flat_list.extend(list_flatten(item))
+        else:
+            flat_list.append(item)
+    return flat_list
 
-    This function gets a list of combination of integers or nested lists
-    e.g.
-    [1, [], [1, 2, [4, 0, [5], 6], [5, 4], 34, 0], [3]]
-
-    The functions should return a flatten list (including all nested lists):
-    [1, 1, 2, 4, 0, 5, 6, 5, 4, 34, 0, 3]
-
-    :param lst: list of integers of another list
-    :return: flatten list
-    """
-    return None
 
 
 def str_compression(text):
@@ -334,8 +281,8 @@ if __name__ == '__main__':
     print('\nreplace_in_file:\n--------------------')
     print(replace_in_file('mnist-predictor.yaml', '{{IMG_NAME}}', 'mnist-pred:0.0.1'))
 
-    print('\njson_configs_merge:\n--------------------')
-    print(json_configs_merge('default.json', 'local.json'))
+    # print('\njson_configs_merge:\n--------------------')
+    # print(json_configs_merge('default.json', 'local.json'))
 
     print('\nmonotonic_array:\n--------------------')
     print(monotonic_array([1, 2, 3, 6, 8, 9, 0]))
@@ -359,14 +306,14 @@ if __name__ == '__main__':
     print('\nis_valid_email:\n--------------------')
     print(is_valid_email('israel.israeli@gmail.com'))
 
-    print('\npascal_triangle:\n--------------------')
-    print(pascal_triangle(4))
+    # print('\npascal_triangle:\n--------------------')
+    # print(pascal_triangle(4))
 
     print('\nlist_flatten:\n--------------------')
     print(list_flatten([1, 2, [3, 4, [4, 5], 7], 8]))
 
-    print('\nstr_compression:\n--------------------')
-    print(str_compression('aaaabdddddhgf'))
+    # print('\nstr_compression:\n--------------------')
+    # print(str_compression('aaaabdddddhgf'))
 
-    print('\nstrong_pass:\n--------------------')
-    print(strong_pass('##$FgC7^^5a'))
+    # print('\nstrong_pass:\n--------------------')
+    # print(strong_pass('##$FgC7^^5a'))
