@@ -1,3 +1,4 @@
+#q1
 def sum_of_element(elements):
     """
     1 Kata
@@ -14,6 +15,7 @@ def sum_of_element(elements):
 
     return sum
 
+#q2
 def verbing(word):
     """
     1 Kata
@@ -30,9 +32,14 @@ def verbing(word):
     :param word: str
     :return: Return the resulting string.
     """
-    return None
+    if len(word) < 3:
+        return word
+    if word.endswith('ing'):
+        return word + 'ly'
+    return word + 'ing'
+print (verbing('hello'))
 
-
+#q3
 def words_concatenation(words):
     """
     1 Kata
@@ -45,9 +52,10 @@ def words_concatenation(words):
     :param words: list of str
     :return: Return the resulting string.
     """
-    return None
+    return ' '.join(words)
+print(words_concatenation(['take', 'me', 'home']))
 
-
+#q4
 def reverse_words_concatenation(words):
     """
     1 Kata
@@ -60,9 +68,11 @@ def reverse_words_concatenation(words):
     :param words: list of str
     :return: Return the resulting string.
     """
-    return None
+    return " ".join(words[::-1])
+print(reverse_words_concatenation(['take', 'me', 'home']))
 
-
+#q5
+#set יוצר קבוצה של כל התווים במחרוזת (ומסיר כפולים).
 def is_unique_string(some_str):
     """
     2 Kata
@@ -77,9 +87,13 @@ def is_unique_string(some_str):
     :param some_str:
     :return: bool
     """
-    return None
+    return len(set(some_str)) == len(some_str)
+print(is_unique_string('abcd'))    # True
+print(is_unique_string('aaabcd'))  # False
+print(is_unique_string(''))        # True
 
-
+#q6
+##הפונקציה diff_list מחשבת הפרשים בין כל זוג איברים סמוכים ברשימה של מספרים.
 def list_diff(elements):
     """
     1 Kata
@@ -95,9 +109,23 @@ def list_diff(elements):
     :param elements: list of integers
     :return: the diff list
     """
-    return None
+    if not elements:
+        return []
 
+    result = [None]
+    for i in range(1, len(elements)):
+        result.append(elements[i] - elements[i - 1])
+    return result
 
+print(list_diff([1, 2, 3, 4, 7, 11]))       # [None, 1, 1, 1, 3, 4]
+print(list_diff([]))                        # []
+print(list_diff([1, 5, 0, 4, 1, 1, 1]))     # [None, 4, -5, 4, -3, 0, 0]
+
+#q7
+#בדיקה למספר ראשוני-מתחלק רק בעצמו וב-1
+#אם num < 2 → הוא לא ראשוני (1, 0, ושליליים).
+#range(2, √num) מספיק לבדוק, כי אם יש מחלקים הם יופיעו שם (יעיל יותר).
+#אם אף אחד לא חילק את המספר – נחזיר True.
 def prime_number(num):
     """
     1 Kata
@@ -108,8 +136,24 @@ def prime_number(num):
     :param num: the number to check
     :return: bool. True if prime, else False
     """
-    return None
+    if num < 2:
+        return False
+    for i in range(2, int(num ** 0.5) + 1):
+        if num % i == 0:
+            return False
+    return True
 
+
+print (prime_number(2))
+print(prime_number(4))
+
+#q8
+#כדי לבדוק אם מספר הוא פלינדרום (כלומר, נקרא אותו דבר מההתחלה ומהסוף), נוכל פשוט להפוך את המספר למחרוזת ולבדוק אם היא שווה לעצמה במהופך
+#str(num) – הופך את המספר למחרוזת.
+
+#[::-1] – הופך את המחרוזת.
+
+#משווים בין המספר לבין עצמו כשהוא מהופך.
 
 def palindrome_num(num):
     """
@@ -124,9 +168,14 @@ def palindrome_num(num):
     :param num: int
     :return: bool. True is palindrome, else False
     """
-    return None
+    return str(num) == str(num)[::-1]
+
+print(palindrome_num(1441))
+print(palindrome_num(123))
+print(palindrome_num(7))
 
 
+#q9
 def pair_match(men, women):
     """
     3 Kata
@@ -155,9 +204,29 @@ def pair_match(men, women):
     :param women: dict mapping name -> age
     :return: tuple (men_name, women_name) such their age absolute difference is the minimal
     """
-    return None
+    if not men or not women:
+        return None  # אין זוגות להשוות אם אחד המילונים ריק
+
+    min_diff = float('inf')
+    best_pair = None
+
+    for man_name, man_age in men.items():
+        for woman_name, woman_age in women.items():
+            diff = abs(man_age - woman_age)
+            if diff < min_diff:
+                min_diff = diff
+                best_pair = (man_name, woman_name)
+
+    return best_pair
+
+print(pair_match({}, {"Anna": 30}))        # None
+print(pair_match({"Tom": 20}, {}))         # None
+print(pair_match({"Tom": 20}, {"Anna": 21}))  # ('Tom', 'Anna')
 
 
+#q10
+#הפונקציה אמורה לחשב ממוצע של 3 מספרים, אבל יש לה טעות בחישוב בגלל סדר פעולות.
+#כדי לחשב ממוצע נכון, צריך לחלק את הסכום של כל שלושת המספרים ב־3.
 def bad_average(a, b, c):
     """
     1 Kata
@@ -168,7 +237,12 @@ def bad_average(a, b, c):
     :return:
     """
     return a + b + c / 3
+print(bad_average(2,4,6))
+print(bad_average(3,8,12))
 
+
+#q11
+#הפונקציה אמורה לקבל מילון שבו המפתחות הם שמות התלמידים והערכים הם הציונים שלהם, ולהחזיר את השם של התלמיד עם הציון הגבוה ביותר.
 
 def best_student(grades):
     """
@@ -190,9 +264,40 @@ def best_student(grades):
     :param grades: dict of name -> grade mapping
     :return: str. some key from the dict
     """
-    return None
+    if not grades:
+        return None
+
+    return max(grades, key=grades.get)
+
+grades = {
+    "Ben": 78,
+    "Hen": 88,
+    "Natan": 99,
+    "Efraim": 65,
+    "Rachel": 95
+}
+
+print(best_student(grades))
 
 
+#q12
+#הפונקציה print_dict מקבלת מילון (dictionary) בשם some_dict — זה בעצם מבנה נתונים שמכיל זוגות של מפתח (key) וערך (value).
+
+#print("Key\tValue")
+#מדפיס שורה עם הכותרות "Key" ו-"Value", כשה-\t הוא תו טאב (tab), שמוסיף רווח אופקי בין המילים, כדי ליישר את הטקסט בטבלה.
+
+#print("-------------")
+#מדפיס שורה של קווים כדי ליצור הפרדה בין הכותרות לתוכן.
+
+#לולאת for: for key, value in some_dict.items():
+#כאן אנחנו עוברים על כל הזוגות (מפתח וערך) במילון.
+
+#.items() מחזיר רשימה של זוגות (key, value) מהמילון.
+
+#כל סיבוב בלולאה לוקח מפתח וערך אחד.
+
+#print(f"{key}\t{value}")
+#מדפיס כל מפתח וערך עם טאב ביניהם, כדי שיצאו בטור מסודר.
 def print_dict_as_table(some_dict):
     """
     1 Kata
@@ -220,8 +325,26 @@ def print_dict_as_table(some_dict):
     :return:
     """
 
-    return None
+    print("Key\tValue")
+    print("-------------")
+    for key, value in some_dict.items():
+        print(f"{key}\t{value}")
 
+print(print_dict_as_table({"Ben": 78,
+            "Hen": 88,
+            "Natan": 99,
+            "Efraim": 65,
+            "Rachel": 95}))
+
+
+#q13
+#פונקציה הזו אמורה למזג את התוכן של dict2 לתוך dict1 ולהחזיר את dict1 המעודכן.
+
+#הקוד שלך כרגע מחזיר רק את dict1 בלי לבצע שום מיזוג.
+
+#dict1.update(dict2) — מוסיף או מעדכן כל זוג מפתח-ערך מ־dict2 לתוך dict1.
+
+#הפונקציה מחזירה את dict1 אחרי העדכון.
 
 def merge_dicts(dict1, dict2):
     """
@@ -240,9 +363,21 @@ def merge_dicts(dict1, dict2):
     :param dict2:
     :return:
     """
+    dict1.update(dict2)
     return dict1
 
+dict1 = {'a': 1}
+dict2 = {'b': 2}
 
+result = merge_dicts(dict1, dict2)
+print(result)
+
+#q14
+#הפונקציה הזו אמורה להחזיר את כל המספרים מ-1 עד n שעומדים בתנאי ה-"Boom" במשחק "7-boom".
+
+#במשחק 7-boom, "Boom" זה כל מספר שמכיל את הספרה 7 או שמתחלק ב-7.
+
+#לפי הדוגמה שנתת, ל-n=30, הפלט הוא [7, 14, 17, 21, 27, 28] — כל המספרים שמכילים 7 או שמתחלקים ב-7.
 def seven_boom(n):
     """
     1 Kata
@@ -255,8 +390,20 @@ def seven_boom(n):
     :param n: int. The last number for count for a 7-boom play
     :return: list of integers
     """
-    return None
+    result = []
+    for i in range(1, n+1):
+        if '7' in str(i) or i % 7 == 0:
+            result.append(i)
+    return result
 
+print(seven_boom(30))
+
+
+#q15
+#דובר בצופן קיסר (Caesar cipher) עם היסט של 3 תווים קדימה.
+#אנחנו עושים צופן קיסר בהיסט של +3 אותיות.
+#כל אות מוחלפת באות שנמצאת 3 מקומות אחריה באלפבית (במעגל, כלומר Z עובר ל־C).
+#רווחים נשארים ללא שינוי.
 
 def caesar_cipher(str_to_encrypt):
     """
@@ -270,8 +417,23 @@ def caesar_cipher(str_to_encrypt):
 
     :return:
     """
-    return None
+    result = []
+    for char in str_to_encrypt:
+        if char.isalpha():
+            shift = 65 if char.isupper() else 97  # ASCII 'A' or 'a'
+            result.append(chr((ord(char) - shift + 3) % 26 + shift))
+        else:
+            result.append(char)  # leave spaces unchanged
+    return "".join(result)
 
+
+# דוגמה:
+print(caesar_cipher("Fly Me To The Moon"))
+# ➝ Iob Ph Wr Wkh Prrq
+
+#q16
+#int(ch) ממיר כל תו למספר.
+#sum(...) מחבר את כולם יחד.
 
 def sum_of_digits(digits_str):
     """
@@ -288,8 +450,11 @@ def sum_of_digits(digits_str):
     :param digits_str: str of numerical digits only
     :return: int representing the sum of digits
     """
-    return None
+    return sum(int(ch) for ch in digits_str) if digits_str else 0
 
+print(sum_of_digits('2524'))   # ➝ 13
+print(sum_of_digits(''))       # ➝ 0
+print(sum_of_digits('00232'))  # ➝ 7
 
 if __name__ == '__main__':
 
