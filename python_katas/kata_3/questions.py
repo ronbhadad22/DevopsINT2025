@@ -1,8 +1,13 @@
-from python_katas.kata_3.utils import open_img, save_img
-import requests   # to be used in simple_http_request()
+
+#import requests  # to be used in simple_http_request()
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
+#Q1
+#פונקציה מחשבת איזה פריטים לבחור כך שהשק לא יהיה כבד מדי אבל הערך הכולל יהיה הכי גבוה שאפשר.
+#items – מילון שבו המפתח הוא שם הפריט, והערך הוא זוג ((משקל, ערך)).
+#יוצרים טבלה דו־ממדית dp בגודל: (מספר פריטים + 1) × (קיבולת השק + 1).
+#הערך המקסימלי שאפשר לקבל אם מסתכלים רק על i פריטים ראשונים ובקיבולת שק w.
 
 def knapsack(items, knapsack_limit=50):
     """
@@ -21,9 +26,46 @@ def knapsack(items, knapsack_limit=50):
     :param knapsack_limit:
     :return: set of items
     """
-    return None
+    # שמירת הפריטים עם אינדקס
+    names = list(items.keys())
+    weights = [items[name][0] for name in names]
+    values = [items[name][1] for name in names]
+    n = len(items)
 
+    # טבלת DP: שורות = פריטים, עמודות = קיבולת
+    dp = [[0] * (knapsack_limit + 1) for _ in range(n + 1)]
 
+    # מילוי הטבלה
+    for i in range(1, n + 1):
+        for w in range(1, knapsack_limit + 1):
+            if weights[i - 1] <= w:
+                dp[i][w] = max(dp[i - 1][w],
+                               dp[i - 1][w - weights[i - 1]] + values[i - 1])
+            else:
+                dp[i][w] = dp[i - 1][w]
+
+    # שיחזור הפריטים שנבחרו
+    chosen = set()
+    w = knapsack_limit
+    for i in range(n, 0, -1):
+        if dp[i][w] != dp[i - 1][w]:  # המשמעות: הפריט נבחר
+            chosen.add(names[i - 1])
+            w -= weights[i - 1]
+
+    return chosen
+items = {
+    "bed": (100, 15),
+    "iphone13": (1, 1500),
+    "tv": (20, 300),
+    "painting": (2, 1000)
+}
+
+print(knapsack(items, 50))
+
+#Q2
+#מטרה כאן היא לכתוב פונקציה שמודדת את זמן הריצה הממוצע של פונקציה אחרת
+#לקבל פונקצייה=>להריץ 100 פעמים=>למדוד זמן ריצה=>להחזיר ממוצע של זמן ריצה
+import time
 def time_me(func):
     """
     2 Kata
@@ -35,9 +77,23 @@ def time_me(func):
     :param func:
     :return:
     """
-    return None
+    runs = 100
+    total_time = 0.0
+    
+    for _ in range(runs):
+        start = time.perf_counter()   # זמן מדויק במיוחד
+        func()
+        end = time.perf_counter()
+        total_time += (end - start)
+    
+    return total_time / runs
+def test_func():
+    sum([i for i in range(10000)])
+
+print(time_me(test_func))
 
 
+#Q3
 def youtube_download(video_id):
     """
     3 Kata
@@ -50,10 +106,16 @@ def youtube_download(video_id):
     :param video_id: str
     :return: None
     """
+    
 
-
-    return None
-
+#Q4
+#לבחור את מספר המשימות המרבי שניתן לבצע מבלי שהן יתחפפו בזמנים.
+#המטרה: לבחור את הקבוצה הגדולה ביותר של משימות שאינן חופפות.
+#קודם כל ממיינים את כל המשימות לפי זמן הסיום שלהן מהקטן לגדול.
+#מתחילים עם משימה שהסתיימה הכי מוקדם (או הראשונה במיון).
+#אחרי שבחרנו משימה, מעבירים את "הזמן האחרון" לנקודת הסיום שלה.
+#enumerate(tasks) נותן לנו (index, task), כדי שנוכל להחזיר את האינדקסים בסוף.
+#x[1][1] הוא זמן הסיום של המשימה.
 
 def tasks_scheduling(tasks):
     """
@@ -69,10 +131,37 @@ def tasks_scheduling(tasks):
     :param: tasks: list of tuple (start, end) while start and end are datetime objects
     :return: list of tasks indexes to perform
     """
-    return None
+    # שמירת האינדקס המקורי
+    indexed_tasks = list(enumerate(tasks))
+    
+    # מיון לפי זמן סיום
+    indexed_tasks.sort(key=lambda x: x[1][1])  # x[1][1] = end time
+    
+    selected_indexes = []
+    last_end_time = None
+    
+    for idx, (start, end) in indexed_tasks:
+        if last_end_time is None or start >= last_end_time:
+            selected_indexes.append(idx)
+            last_end_time = end
+    
+    return selected_indexes
 
+from datetime import datetime
+
+tasks = [
+    (datetime(2025, 8, 24, 9), datetime(2025, 8, 24, 12)),
+    (datetime(2025, 8, 24, 10), datetime(2025, 8, 24, 11)),
+    (datetime(2025, 8, 24, 13), datetime(2025, 8, 24, 15)),
+]
+
+print(tasks_scheduling(tasks))  # יכול להחזיר [1, 2] או [0, 2] בהתאם למיון
+
+
+#Q5
 
 def valid_dag(edges):
+    from collections import defaultdict
     """
     5 Kata
 
@@ -85,8 +174,51 @@ def valid_dag(edges):
     :param edges: list of tuples of string 'a', 'b'....
     :return: bool - True if and only if it is a valid DAG
     """
-    return None
 
+    # בונים מילון של צמתים עם רשימת שכנים
+    graph = defaultdict(list)
+    nodes = set()
+    for u, v in edges:
+        graph[u].append(v)
+        nodes.add(u)
+        nodes.add(v)
+
+    visited = set()
+    rec_stack = set()
+
+    def dfs(node):
+        if node in rec_stack:  # מעגל
+            return True
+        if node in visited:    # כבר ביקרנו ואין מעגל
+            return False
+
+        visited.add(node)
+        rec_stack.add(node)
+
+        for neighbor in graph[node]:
+            if dfs(neighbor):
+                return True
+
+        rec_stack.remove(node)
+        return False
+
+    for node in nodes:
+        if dfs(node):  # אם נמצא מעגל
+            return False
+
+    return True  # אם לא נמצא אף מעגל → זה DAG
+edges1 = [('a', 'b'), ('a', 'c'), ('a', 'd'), ('a', 'e'), 
+          ('b', 'd'), ('c', 'd'), ('c', 'e')]
+
+edges2 = [('a', 'b'), ('b', 'c'), ('c', 'a')]  # מכיל מעגל
+
+print(valid_dag(edges1))  # True – אין מעגל, זה DAG
+print(valid_dag(edges2))  # False – יש מעגל (a → b → c → a)
+
+
+#Q6
+from utils import open_img, save_img
+import os
 
 def rotate_img(img_filename):
     """
@@ -97,13 +229,42 @@ def rotate_img(img_filename):
     :param img_filename: image file path (png or jpeg)
     :return: None, the rotated image should be saved as 'rotated_<original image filename>'
     """
+     # פותחים את התמונה למטריצה
     image = open_img(img_filename)
 
-    pass  # use rotate_matrix from previous kata 2 or implement....
+    # סיבוב מטריצה 90 מעלות בכיוון השעון
+    rotated_img = [list(row) for row in zip(*image[::-1])]
 
-    # use the below line to save list as image
-    # save_img(rotated_img, f'rotated_{img_filename}')
+    # שם הקובץ החדש
+    base_name = os.path.basename(img_filename)
+    new_filename = f'rotated_{base_name}'
 
+    # שמירת התמונה החדשה
+    save_img(rotated_img, new_filename)
+
+    print(f"Image saved as {new_filename}")
+
+# דוגמה לקריאה לפונקציה
+# רק צריך לשים את שם הקובץ של התמונה באותה תיקייה
+rotate_img(r"C:\Users\pnofa\OneDrive\שולחן העבודה\Python Project\DevopsINT2025\python_katas\kata_3\67203.jpeg")
+
+#Q7
+import os
+from utils import open_img, save_img
+
+def matrix_avg(mat):
+    rows = len(mat)
+    cols = len(mat[0])
+    new_mat = [[0]*cols for _ in range(rows)]
+
+    for i in range(rows):
+        for j in range(cols):
+            neighbors = []
+            for x in range(max(0,i-1), min(rows,i+2)):
+                for y in range(max(0,j-1), min(cols,j+2)):
+                    neighbors.append(mat[x][y])
+            new_mat[i][j] = sum(neighbors)/len(neighbors)
+    return new_mat
 
 def img_blur(img_filename):
     """
@@ -114,13 +275,25 @@ def img_blur(img_filename):
     :param img_filename: image file path (png or jpeg)
     :return: None, the rotated image should be saved as 'rotated_<original image filename>'
     """
+    # פותחים את התמונה למטריצה
     image = open_img(img_filename)
 
-    pass  # use matrix_avg from previous kata 2 or implement....
+    # מטשטשים את התמונה
+    blured_img = matrix_avg(image)
 
-    # use the below line to save list as image
-    # save_img(blured_img, f'blured_{img_filename}')
+    # שמירת הקובץ החדש
+    base_name = os.path.basename(img_filename)
+    new_filename = f'blured_{base_name}'
+    save_img(blured_img, new_filename)
+    print(f"Image saved as {new_filename}")
 
+# דוגמה לקריאה לפונקציה
+img_blur(r"C:\Users\pnofa\OneDrive\שולחן העבודה\Python Project\DevopsINT2025\python_katas\kata_3\67203.jpeg")
+
+#Q8
+#לקחת שורה אחת מתוך לוג של Apache ולחלק אותה לשדות מובנים, כך שניתן יהיה לעבוד איתה בתוכנה בקלות.
+import re
+from datetime import datetime
 
 def apache_logs_parser(apache_single_log):
     """
@@ -139,9 +312,34 @@ def apache_logs_parser(apache_single_log):
     :return: parsed log data as tuple
     """
     date, level, pid, tid, client_ip, log = ..., ..., ..., ..., ..., ...
-    return date, level, pid, tid, client_ip, log
+    # regex pattern לפי פורמט הלוג
+    pattern = r'\[(.*?)\] \[(.*?):(.*?)\] \[pid (\d+):tid (\d+)\] \[client (.*?)\] (.*)'
 
+    match = re.match(pattern, apache_single_log)
+    if not match:
+        raise ValueError("Log format not recognized")
 
+    # חיתוך השדות
+    date_str, module, level, pid, tid, client_ip, log_msg = match.groups()
+
+    # המרה של date למועד datetime
+    date = datetime.strptime(date_str, "%a %b %d %H:%M:%S.%f %Y")
+
+    # המרה של pid ו‑tid ל־int
+    pid = int(pid)
+    tid = int(tid)
+
+    return date, level, pid, tid, client_ip, log_msg
+log_line = "[Fri Sep 09 10:42:29.902022 2011] [core:error] [pid 35708:tid 4328636416] [client 72.15.99.187] File does not exist: /usr/local/apache2/htdocs/favicon.ico"
+
+parsed = apache_logs_parser(log_line)
+print(parsed)
+
+#Q9
+#פונקציה הזו המטרה היא לבצע בקשה פשוטה ל־Binance API ולקבל מידע על שוק ההחלפות (market exchange info).
+#משתמשים ב־requests כדי לשלוח בקשה HTTP.
+#לאחר קבלת התגובה, משתמשים ב־.json() כדי להמיר את התגובה לאובייקט Python (dict/list).
+import requests 
 def simple_http_request():
     """
     2 Kata
@@ -153,9 +351,20 @@ def simple_http_request():
 
     :return: json of market exchange information
     """
-    return None
+    url = "https://api.binance.com/api/v3/exchangeInfo"
+    response = requests.get(url)
+    data = response.json()
+    return data
 
+# שימוש בפונקציה
+market_data = simple_http_request()
+print(market_data)
 
+#Q10
+#מחלקה בשם SortedDict שתתנהג כמו מילון רגיל (dict), אבל תסדר את המפתחות שלה לפי סדר אלפביתי או סדר גודל (לפי סוג המפתחות) בכל פעם שמסתכלים עליהם.
+#גדרת מילון רגיל – זה מחלקה שיורשת מ־dict.
+#סידור המפתחות – בכל קריאה ל־keys(), values() או items() צריך להחזיר את הערכים לפי סדר המפתחות.
+#הוספת פריטים – כל פעם שמוסיפים פריט חדש (__setitem__) המפתח צריך להיכלל בסדר המיון.
 class SortedDict(dict):
     """
     8 Kata
@@ -179,24 +388,36 @@ class SortedDict(dict):
     list(x.items())
     >> [('apple', 'aaa'), ('banana', 'ccc'), ('orange', 'bbb')]
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def __init__(self):
-        super().__init__()
-        pass
-
-    def __setattr__(self, key, value):
-        pass
-
-    def items(self):
-        raise NotImplemented()
-
-    def values(self):
-        raise NotImplemented()
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
 
     def keys(self):
-        raise NotImplemented()
+        return sorted(super().keys())
+
+    def values(self):
+        return [self[k] for k in self.keys()]
+
+    def items(self):
+        return [(k, self[k]) for k in self.keys()]
+x = SortedDict()
+x['banana'] = 'ccc'
+x['apple'] = 'aaa'
+x['orange'] = 'bbb'
+
+print(list(x.keys()))    # ['apple', 'banana', 'orange']
+print(list(x.values()))  # ['aaa', 'ccc', 'bbb']
+print(list(x.items()))   # [('apple', 'aaa'), ('banana', 'ccc'), ('orange', 'bbb')]
 
 
+
+#Q11
+#הרשימה שומרת תמיד את ה־n האיברים האחרונים בלבד:
+#הרשימה מתנהגת כמו רשימה רגילה (list) אבל שומרת רק את מספר האיברים שהוגדר ב־cache_size.
+#super() מאפשר לנו לגשת למתודות של המחלקה ההורה (list במקרה שלנו) מתוך המחלקה הנוכחית (CacheList).
+#pop() היא מתודת רשימות בפייתון שמסירה ומחזירה איבר מהתא האחרון ברשימה או ממיקום מסוים אם מציינים אינדקס.
 class CacheList(list):
     """
     8 Kata
@@ -224,11 +445,25 @@ class CacheList(list):
     """
     def __init__(self, cache_size=5):
         super().__init__()
-        pass
+        self.cache_size = cache_size
 
     def append(self, element):
-        pass
+        super().append(element)
+        # אם הרשימה ארוכה מדי, מסירים את הפריטים הישנים ביותר
+        while len(self) > self.cache_size:
+            self.pop(0)
+x = CacheList(3)
 
+x.append(1)
+x.append(2)
+x.append(3)
+print(x)  # [1, 2, 3]
+
+x.append(1)
+print(x)  # [2, 3, 1]
+
+x.append(1)
+print(x)  # [3, 1, 1]
 
 if __name__ == '__main__':
     import time
