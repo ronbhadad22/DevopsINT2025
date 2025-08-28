@@ -15,6 +15,13 @@ def sum_of_element(elements):
     return sum
 
 def verbing(word):
+    if len(word) < 3:
+        return word
+    elif word.endswith('ing'):
+        return word + 'ly'
+    else:
+        return word + 'ing'
+
     """
     1 Kata
 
@@ -34,6 +41,8 @@ def verbing(word):
 
 
 def words_concatenation(words):
+    return ' '.join(words)
+
     """
     1 Kata
 
@@ -49,6 +58,8 @@ def words_concatenation(words):
 
 
 def reverse_words_concatenation(words):
+    return' '.join(words[::-1])
+
     """
     1 Kata
 
@@ -64,6 +75,8 @@ def reverse_words_concatenation(words):
 
 
 def is_unique_string(some_str):
+    return len(set(some_str)) == len(some_str)
+
     """
     2 Kata
 
@@ -81,6 +94,16 @@ def is_unique_string(some_str):
 
 
 def list_diff(elements):
+    if not elements:
+        return []
+    
+    result = [None]
+    for i in range(1, len(elements)):
+        result.append(elements[i] - elements[i - 1])
+    
+    return result
+
+    
     """
     1 Kata
 
@@ -99,6 +122,14 @@ def list_diff(elements):
 
 
 def prime_number(num):
+    if num<= 1:
+        return False  
+    for i in range(2, int(num ** 0.5) + 1): 
+        if num % i == 0:
+            return False  
+    return True 
+
+
     """
     1 Kata
 
@@ -112,6 +143,7 @@ def prime_number(num):
 
 
 def palindrome_num(num):
+    return str(num) ==str(num)[::-1]
     """
     1 Kata
 
@@ -128,7 +160,16 @@ def palindrome_num(num):
 
 
 def pair_match(men, women):
-    """
+    print(f"men = {men}")
+    print(f"women = {women}")
+
+men = {"John": 20, "Abraham": 30}
+women = {"July": 18, "Kim": 26}
+
+pair_match(men, women)
+
+    
+"""
     3 Kata
 
     This function gets two dictionaries of the type:
@@ -155,10 +196,14 @@ def pair_match(men, women):
     :param women: dict mapping name -> age
     :return: tuple (men_name, women_name) such their age absolute difference is the minimal
     """
-    return None
+#return None
 
 
 def bad_average(a, b, c):
+    (a+b+b/3)
+    a =4
+    b=5
+    c=7
     """
     1 Kata
 
@@ -171,6 +216,8 @@ def bad_average(a, b, c):
 
 
 def best_student(grades):
+    return max(grades, key=grades.get)
+
     """
     1 Kata
 
@@ -194,6 +241,11 @@ def best_student(grades):
 
 
 def print_dict_as_table(some_dict):
+    print("key""   ""value")
+    print("............")
+    for key, value in some_dict.items():
+        print(f"{key:<8} {value}")
+
     """
     1 Kata
 
@@ -224,6 +276,9 @@ def print_dict_as_table(some_dict):
 
 
 def merge_dicts(dict1, dict2):
+    dict1.update(dict2)
+    return dict1
+
     """
     1 Kata
 
@@ -244,6 +299,11 @@ def merge_dicts(dict1, dict2):
 
 
 def seven_boom(n):
+    result = []
+    for i in range(1, n + 1):
+        if i % 7 == 0 or '7' in str(i):
+            result.append(i)
+    return result
     """
     1 Kata
 
@@ -257,8 +317,19 @@ def seven_boom(n):
     """
     return None
 
-
 def caesar_cipher(str_to_encrypt):
+    result = ""
+    for char in str_to_encrypt:
+        if char == " ":
+            result += " "
+        elif char.isalpha():
+            shift = 3
+            if char.islower():
+                result += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
+            else:
+                result += chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
+    return result
+
     """
     2 Kata
 
@@ -274,6 +345,12 @@ def caesar_cipher(str_to_encrypt):
 
 
 def sum_of_digits(digits_str):
+    total = 0  # Define the variable before using it
+    for digit in digits_str:
+        total += int(digit)
+    return total
+
+
     """
     1 Kata
 
@@ -296,76 +373,76 @@ if __name__ == '__main__':
     print('\nsum_of_element:\n--------------------')
     print(sum_of_element([1, 2]))
     print(sum_of_element([1, 3]))
-    # print(sum_of_element([4, 5, 6]))
-    #
-    # print('\nverbing:\n--------------------')
-    # print(verbing('walk'))
-    # print(verbing('swimming'))
-    # print(verbing('do'))
-    #
-    # print('\nwords_concatenation:\n--------------------')
-    # print(words_concatenation(['take', 'me', 'home']))
-    #
-    # print('\nreverse_words_concatenation:\n--------------------')
-    # print(reverse_words_concatenation(['take', 'me', 'home']))
-    #
-    # print('\nis_unique_string:\n--------------------')
-    # print(is_unique_string('aasdssdsederd'))
-    # print(is_unique_string('12345tgbnh'))
-    #
-    # print('\nlist_diff:\n--------------------')
-    # print(list_diff([1, 2, 3, 8, 77, 0]))
-    #
-    # print('\nprime_number:\n--------------------')
-    # print(prime_number(5))
-    # print(prime_number(22))
-    #
-    # print('\npalindrome_num:\n--------------------')
-    # print(palindrome_num(12221))
-    # print(palindrome_num(577))
-    #
-    # print('\npair_match:\n--------------------')
-    # print(pair_match(
-    #     {
-    #         "John": 20,
-    #         "Abraham": 45
-    #     },
-    #     {
-    #         "July": 18,
-    #         "Kim": 26
-    #     }
-    # ))
-    #
-    # print('\nbad_average:\n--------------------')
-    # print(bad_average(1, 2, 3))
-    #
-    # print('\nbest_student:\n--------------------')
-    # print(best_student({
-    #     "Ben": 78,
-    #     "Hen": 88,
-    #     "Natan": 99,
-    #     "Efraim": 65,
-    #     "Rachel": 95
-    # }))
-    #
-    # print('\nprint_dict_as_table:\n--------------------')
-    # print(print_dict_as_table({
-    #     "Ben": 78,
-    #     "Hen": 88,
-    #     "Natan": 99,
-    #     "Efraim": 65,
-    #     "Rachel": 95
-    # }))
-    #
-    # print('\nmerge_dicts:\n--------------------')
-    # print(merge_dicts({'a': 1}, {'b': 2}))
-    #
-    # print('\nseven_boom:\n--------------------')
-    # print(seven_boom(30))
-    #
-    # print('\ncaesar_cipher:\n--------------------')
-    # print(caesar_cipher('Fly Me To The Moon'))
-    #
-    # print('\nsum_of_digits:\n--------------------')
-    # print(sum_of_digits('1223432'))
+    print(sum_of_element([4, 5, 6]))
+    
+    print('\nverbing:\n--------------------')
+    print(verbing('walk'))
+    print(verbing('swimming'))
+    print(verbing('do'))
+    
+    print('\nwords_concatenation:\n--------------------')
+    print(words_concatenation(['take', 'me', 'home']))
+    
+    print('\nreverse_words_concatenation:\n--------------------')
+    print(reverse_words_concatenation(['take', 'me', 'home']))
+    
+    print('\nis_unique_string:\n--------------------')
+    print(is_unique_string('aasdssdsederd'))
+    print(is_unique_string('12345tgbnh'))
+    
+    print('\nlist_diff:\n--------------------')
+    print(list_diff([1, 2, 3, 8, 77, 0]))
+    
+    print('\nprime_number:\n--------------------')
+    print(prime_number(5))
+    print(prime_number(22))
+    
+    print('\npalindrome_num:\n--------------------')
+    print(palindrome_num(12221))
+    print(palindrome_num(577))
+    
+    print('\npair_match:\n--------------------')
+    print(pair_match(
+        {
+            "John": 20,
+             "Abraham": 45
+        },
+         {
+             "July": 18,
+            "Kim": 26
+         }
+     ))
+    
+    print('\nbad_average:\n--------------------')
+    print(bad_average(1, 2, 3))
+    
+    print('\nbest_student:\n--------------------')
+    print(best_student({
+    "Ben": 78,
+    "Hen": 88,
+     "Natan": 99,
+       "Efraim": 65,
+        "Rachel": 95
+    }))
+    
+    print('\nprint_dict_as_table:\n--------------------')
+    print(print_dict_as_table({
+        "Ben": 78,
+        "Hen": 88,
+         "Natan": 99,
+        "Efraim": 65,
+        "Rachel": 95
+     }))
+    
+    print('\nmerge_dicts:\n--------------------')
+    print(merge_dicts({'a': 1}, {'b': 2}))
+    
+    print('\nseven_boom:\n--------------------')
+    print(seven_boom(30))
+    
+    print('\ncaesar_cipher:\n--------------------')
+    print(caesar_cipher('Fly Me To The Moon'))
+    
+    print('\nsum_of_digits:\n--------------------')
+    print(sum_of_digits('1223432'))
 

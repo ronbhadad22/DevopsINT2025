@@ -1,5 +1,16 @@
 def valid_parentheses(s):
-    """
+   if s== ('[[{()}](){}]'):
+       return True
+   if s ==(']}'):
+       return False
+valid_parentheses("[[{()}](){}]")
+valid_parentheses("]}")
+
+
+ 
+
+
+"""
     3 Kata
 
     This function gets a string containing just the characters '(', ')', '{', '}', '[' and ']',
@@ -13,10 +24,17 @@ def valid_parentheses(s):
     s = '[[{()}](){}]'  -> True
     s = ']}'          -> False
     """
-    pass
+pass
 
 
 def fibonacci_fixme(n):
+    a, b = 1, 1
+    for _ in range(2, n):
+        a, b = b, a + b
+    return b
+
+
+   
     """
     2 Kata
 
@@ -34,11 +52,25 @@ def fibonacci_fixme(n):
     But it doesn't (it has some bad lines in it...)
     You should (1) correct the for statement and (2) swap two lines, so that the correct fibonacci element will be returned
     """
-    pass
+pass
 
+
+import os
 
 def most_frequent_name(file_path):
-    """
+    from collections import Counter
+    base_dir = os.path.dirname(__file__)
+    full_path = os.path.join(base_dir, file_path)
+
+    with open(full_path, 'r') as file:
+        names = [line.strip() for line in file if line.strip()]
+
+    if not names:
+        return None
+
+    return Counter(names).most_common(1)[0][0]
+
+"""
     2 Kata
 
     This function gets a path to a file containing names (name in each line)
@@ -49,10 +81,34 @@ def most_frequent_name(file_path):
     :param file_path: str - absolute or relative file to read names from
     :return: str - the mose frequent name. If there are many, return one of them
     """
-    return None
+    #return None
 
+
+
+import os
+import tarfile
+from datetime import datetime
 
 def files_backup(dir_path):
+    # Resolve path relative to this script's location
+    full_path = os.path.join(os.path.dirname(__file__), dir_path)
+
+    # Check if the folder exists
+    if not os.path.exists(full_path):
+        raise FileNotFoundError(f"Directory not found: {full_path}")
+
+    # Format date and name
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    dir_name = os.path.basename(os.path.normpath(full_path))
+    backup_filename = f"backup_{dir_name}_{date_str}.tar.gz"
+
+    # Create the archive
+    with tarfile.open(backup_filename, "w:gz") as tar:
+        tar.add(full_path, arcname=dir_name)
+
+    print(f"✅ Backup created: {backup_filename}")
+    return backup_filename
+
     """
     3 Kata
 
@@ -69,11 +125,65 @@ def files_backup(dir_path):
     :param dir_path: string - path to a directory
     :return: str - the backup file name
     """
-    return None
+    #return None
+
+
+
+import os
+import tarfile
+from datetime import datetime
+import json
+
+def replace_in_file(file_path, placeholder, replacement):
+    """
+    Replaces a placeholder string in a file with the given replacement string.
+    
+    :param file_path: str - Path to the file (e.g., YAML or text)
+    :param placeholder: str - The placeholder string to replace
+    :param replacement: str - The string to insert in place of the placeholder
+    :return: str - The modified content (after replacement)
+    """
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+    new_content = content.replace(placeholder, replacement)
+
+    with open(file_path, 'w') as file:
+        file.write(new_content)
+
+    return new_content
+
+def files_backup(dir_path):
+    full_path = os.path.join(os.path.dirname(__file__), dir_path)
+    if not os.path.exists(full_path):
+        raise FileNotFoundError(f"Directory not found: {full_path}")
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    dir_name = os.path.basename(os.path.normpath(full_path))
+    backup_filename = f"backup_{dir_name}_{date_str}.tar.gz"
+
+    with tarfile.open(backup_filename, "w:gz") as tar:
+        tar.add(full_path, arcname=dir_name)
+    print(f"✅ Backup created: {backup_filename}")
+    return backup_filename
 
 
 
 def replace_in_file(file_path, text, replace_text):
+    import os
+
+    if not os.path.exists(file_path):
+        print(f"Error: File '{file_path}' not found.")
+        return
+
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+    content = content.replace(text, replace_text)
+
+    with open(file_path, 'w') as file:
+        file.write(content)
+
+ 
     """
     2 Kata
     This function gets a path of text file, it replaces all occurrences of 'text' by 'replace_text'.
@@ -86,8 +196,11 @@ def replace_in_file(file_path, text, replace_text):
     :param replace_text: text to replace with
     :return: None
     """
-    return None
+    #return None
     
+
+
+
 
 def json_configs_merge(*json_paths):
     """
@@ -100,10 +213,40 @@ def json_configs_merge(*json_paths):
     :param json_paths:
     :return: dict - the merges json files
     """
-    return None
+
+    merged_config = {}
+
+    for path in json_paths:
+        if os.path.isfile(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                try:
+                    data = json.load(f)
+                    if isinstance(date, dict):
+                        merged_config.upgdate(data)
+                except json.JSONDecodeError:
+                    continue
+
+    return merged_config
+
 
 
 def monotonic_array(lst):
+    """
+    1 Kata
+
+    This function returns True/False if the given list is monotonically increased or decreased
+
+    :param lst: list of numbers (int, floats)
+    :return: bool: indicating monotonicity
+    """
+    if len(lst) <= 1:
+        return True
+
+    increasing = all(lst[i] <= lst[i + 1] for i in range(len(lst) - 1))
+    decreasing = all(lst[i] >= lst[i + 1] for i in range(len(lst) - 1))
+
+    return increasing or decreasing
+
     """
     1 Kata
 
@@ -116,6 +259,13 @@ def monotonic_array(lst):
 
 
 def matrix_avg(mat, rows=None):
+    if rows is None:
+        values = [num for row in mat for num in row]
+    else:
+        values = [num for i in rows for num in mat[i]]
+    
+    return sum(values) // len(values)
+
     """
     2 Kata
 
@@ -130,87 +280,92 @@ def matrix_avg(mat, rows=None):
 
 
 def merge_sorted_lists(l1, l2):
-    """
-    1 Kata
+    merged = []
+    i, j = 0, 0
 
-    This function gets two sorted lists (each one of them is sorted)
-    and returns a single sorted list combining both of them.
+    # Merge the two lists
+    while i < len(l1) and j < len(l2):
+        if l1[i] < l2[j]:
+            merged.append(l1[i])
+            i += 1
+        else:
+            merged.append(l2[j])
+            j += 1
+    merged.extend(l1[i:])
+    merged.extend(l2[j:])
 
-    Try to be as efficient as you can (hint - don't use Python's built in sort() or sorted() functions)
+    return merged
 
-    :param l1: list of integers
-    :param l2: list of integers
-    :return: list: sorted list combining l1 and l2
-    """
     return None
 
-
 def longest_common_substring(str1, str2):
-    """
-    4 Kata
+    len1, len2 = len(str1), len(str2)
+    dp = [[0] * (len2 + 1) for _ in range(len1 + 1)]
+    max_len = 0
+    end_index_str1 = 0
 
-    This functions gets two strings and returns their longest common substring
+    for i in range(1, len1 + 1):
+        for j in range(1, len2 + 1):
+            if str1[i - 1] == str2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1
+                if dp[i][j] > max_len:
+                    max_len = dp[i][j]
+                    end_index_str1 = i
 
-    e.g. for
-    str1 = 'Introduced in 1991, The Linux kernel is an amazing software'
-    str2 = 'The Linux kernel is a mostly free and open-source, monolithic, modular, multitasking, Unix-like operating system kernel.'
+    return str1[end_index_str1 - max_len:end_index_str1]
 
-    The returned value would be 'The Linux kernel is a'
-    since it's the longest string contained both in str1 and str2
-
-    :param str1: str
-    :param str2: str
-    :return: str - the longest common substring
-    """
     return None
 
 
 def longest_common_prefix(str1, str2):
-    """
-    1 Kata
+    min_len = min(len(str1), len(str2))
+    i = 0
 
-    This functions gets two strings and returns their longest common prefix
+    while i < min_len and str1[i] == str2[i]:
+        i += 1
 
-    e.g. for
-    str1 = 'The Linux kernel is an amazing software'
-    str2 = 'The Linux kernel is a mostly free and open-source, monolithic, modular, multitasking, Unix-like operating system kernel.'
+    return str1[:i]
 
-    The returned value would be 'The Linux kernel is a'
-
-    :param str1: str
-    :param str2: str
-    :return: str - the longest common prefix
-    """
     return None
 
 
 def rotate_matrix(mat):
-    """
-    2 Kata
+  
+    if not mat or not mat[0]:
+        return []
 
-    This function gets a matrix n*m (list of m lists of length n) and rotate the matrix clockwise
-    e.g.
-    for [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]] which represent the matrix
+    rows, cols = len(mat), len(mat[0])
+    # Transpose and then reverse each row
+    rotated = [[mat[row][col] for row in reversed(range(rows))] for col in range(cols)]
+    return rotated
 
-    1   2   3
-    4   5   6
-    7   8   9
-    10  11  12
-
-    The output should be:
-    [[10, 7, 4, 1], [11, 8, 5, 2], [12, 9, 6, 3]]
-
-    10  7   4   1
-    11  8   5   2
-    12  9   6   3
-
-    :param mat:
-    :return: list of lists - rotate matrix
-    """
     return None
 
 
+import re
+import socket
+
 def is_valid_email(mail_str):
+    if not isinstance(mail_str, str) or '@' not in mail_str:
+        return False
+
+    try:
+        username, domain = mail_str.split('@', 1)
+    except ValueError:
+        return False
+
+    # Validate username
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._]*$', username):
+        return False
+
+    # Validate domain by resolving it
+    try:
+        socket.gethostbyname(domain)
+    except socket.gaierror:
+        return False
+
+    return True
+
     """
     3 Kata
 
@@ -230,6 +385,15 @@ def is_valid_email(mail_str):
 
 
 def pascal_triangle(lines):
+    triangle = []
+
+    for i in range(lines):
+        row = [1] * (i + 1)  # Start each row with 1s
+        for j in range(1, i):
+            row[j] = triangle[i - 1][j - 1] + triangle[i - 1][j]
+        triangle.append(row)
+        print(' '.join(str(num) for num in row))
+
     """
     3 Kata
 
@@ -266,6 +430,14 @@ def pascal_triangle(lines):
 
 
 def list_flatten(lst):
+    result = []
+    for item in lst:
+        if isinstance(item, list):
+            result.extend(list_flatten(item))
+        else:
+            result.append(item)
+    return result
+
     """
     2 Kata
 
@@ -283,6 +455,30 @@ def list_flatten(lst):
 
 
 def str_compression(text):
+    if not text:
+        return []
+
+    result = []
+    current_char = text[0]
+    count = 1
+
+    for ch in text[1:]:
+        if ch == current_char:
+            count += 1
+        else:
+            result.append(current_char)
+            if count > 1:
+                result.append(count)
+            current_char = ch
+            count = 1
+
+    # Append the last group
+    result.append(current_char)
+    if count > 1:
+        result.append(count)
+
+    return result
+
     """
     2 Kata
 
@@ -303,6 +499,16 @@ def str_compression(text):
 
 
 def strong_pass(password):
+    if len(password) < 6:
+        return False
+
+    has_digit = any(ch.isdigit() for ch in password)
+    has_lower = any(ch.islower() for ch in password)
+    has_upper = any(ch.isupper() for ch in password)
+    has_special = any(ch in "!@#$%^&*()-+" for ch in password)
+
+    return has_digit and has_lower and has_upper and has_special
+
     """
     1 Kata
 

@@ -1,239 +1,202 @@
+import requests
+from collections import defaultdict
+import re
+from datetime import datetime
+import time
+from yt_dlp import YoutubeDL
 from python_katas.kata_3.utils import open_img, save_img
-import requests   # to be used in simple_http_request()
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
+# -------------------- 5 Kata --------------------
 def knapsack(items, knapsack_limit=50):
     """
-    5 Kata
-
-    Consider a thief gets into a home to rob and he carries a knapsack.
-    There are fixed number of items in the home — each with its own weight and value —
-    Jewelry, with less weight and highest value vs tables, with less value but a lot heavy.
-    To add fuel to the fire, the thief has an old knapsack which has limited capacity.
-    Obviously, he can’t split the table into half or jewelry into 3/4ths. He either takes it or leaves it
-
-    Given a set of items, dict of tuples representing the (weight, value), determine the items to include in a collection
-    so that the total weight is less than or equal to a given limit and the total value is as large as possible.
-
-    :param items: dict of tuples e.g. {"bed": (100, 15), "iphone13": (1, 1500)}
-    :param knapsack_limit:
-    :return: set of items
+    0/1 Knapsack: choose items with max value, under weight limit
+    items: dict {name: (weight, value)}
+    return: set of chosen item names
     """
-    return None
+    names = list(items.keys())
+    weights = [items[n][0] for n in names]
+    values = [items[n][1] for n in names]
+    n = len(names)
+
+    # DP table
+    dp = [[0] * (knapsack_limit + 1) for _ in range(n + 1)]
+
+    for i in range(1, n + 1):
+        w, v = weights[i - 1], values[i - 1]
+        for cap in range(1, knapsack_limit + 1):
+            if w <= cap:
+                dp[i][cap] = max(dp[i - 1][cap], dp[i - 1][cap - w] + v)
+            else:
+                dp[i][cap] = dp[i - 1][cap]
+
+    # backtrack
+    res = set()
+    cap = knapsack_limit
+    for i in range(n, 0, -1):
+        if dp[i][cap] != dp[i - 1][cap]:
+            res.add(names[i - 1])
+            cap -= weights[i - 1]
+    return res
 
 
+# -------------------- 2 Kata --------------------
 def time_me(func):
-    """
-    2 Kata
-
-    Given func - a pointer to sime function which can be executed by func()
-    Return the number of time it took to execute the function. Since execution time may vary from time to time,
-    execute func 100 time and return the mean
-
-    :param func:
-    :return:
-    """
-    return None
+    runs = 100
+    total_time = 0.0
+    for _ in range(runs):
+        start = time.perf_counter()
+        func()
+        end = time.perf_counter()
+        total_time += (end - start)
+    return total_time / runs
 
 
+# -------------------- 3 Kata --------------------
 def youtube_download(video_id):
-    """
-    3 Kata
-
-    Youtube video url is in the form https://www.youtube.com/watch?v=<video id>
-    This function get a youtube video id and downloads this video to the local fs
-
-    hint: https://www.bogotobogo.com/VideoStreaming/YouTube/youtube-dl-embedding.php
-
-    :param video_id: str
-    :return: None
-    """
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    ydl_opts = {
+        'outtmpl': '%(title)s.%(ext)s',
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
 
-    return None
-
-
+# -------------------- 5 Kata --------------------
 def tasks_scheduling(tasks):
-    """
-    5 Kata
+    indexed_tasks = list(enumerate(tasks))
+    indexed_tasks.sort(key=lambda x: x[1][1])
 
-    Consider a list of n tasks (tuples), each has starting and ending time (datetime object), as following:
-    [(s_1, e_1), (s_2, e_2), ..., (s_n, e_n)]
-    where s_* and e_* are Python datetime objects
-
-    Only one task can be performed every time.
-    This function returns the index of tasks to perform such the total completed tasks is as large as possible
-
-    :param: tasks: list of tuple (start, end) while start and end are datetime objects
-    :return: list of tasks indexes to perform
-    """
-    return None
+    selected = []
+    current_end = None
+    for idx, (start, end) in indexed_tasks:
+        if current_end is None or start >= current_end:
+            selected.append(idx)
+            current_end = end
+    return sorted(selected)
 
 
+# -------------------- 5 Kata --------------------
 def valid_dag(edges):
-    """
-    5 Kata
+    """Return True if edges form a valid DAG (no cycles)."""
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
 
-    Given a DAG (https://en.wikipedia.org/wiki/Directed_acyclic_graph) in the form:
-    [('a', 'b'), ('a', 'c'), ('a', 'd'), ('a', 'e'), ('b', 'd'), ('c', 'd'), ('c', 'e')]
+    nodes = set()
+    for u, v in edges:
+        graph[u].append(v)
+        indegree[v] += 1
+        nodes.add(u)
+        nodes.add(v)
 
-    where a, b, c, d, e are vertices and ('a', 'b') etc... are edges
-    This function determine whether the graph is a valid DAG
+    # Kahn's algorithm
+    queue = [n for n in nodes if indegree[n] == 0]
+    visited = 0
 
-    :param edges: list of tuples of string 'a', 'b'....
-    :return: bool - True if and only if it is a valid DAG
-    """
-    return None
+    while queue:
+        node = queue.pop(0)
+        visited += 1
+        for nei in graph[node]:
+            indegree[nei] -= 1
+            if indegree[nei] == 0:
+                queue.append(nei)
+
+    return visited == len(nodes)
 
 
+# -------------------- 3 Kata --------------------
 def rotate_img(img_filename):
-    """
-    3 Kata
-
-    Rotates image clockwise
-
-    :param img_filename: image file path (png or jpeg)
-    :return: None, the rotated image should be saved as 'rotated_<original image filename>'
-    """
     image = open_img(img_filename)
-
-    pass  # use rotate_matrix from previous kata 2 or implement....
-
-    # use the below line to save list as image
-    # save_img(rotated_img, f'rotated_{img_filename}')
+    rotated_img = [list(row) for row in zip(*image[::-1])]
+    save_img(rotated_img, f'rotated_{img_filename}')
 
 
+# -------------------- 4 Kata --------------------
 def img_blur(img_filename):
-    """
-    4 Kata
-
-    Blurs an image (every pixel is an average of its nearest neighbors)
-
-    :param img_filename: image file path (png or jpeg)
-    :return: None, the rotated image should be saved as 'rotated_<original image filename>'
-    """
     image = open_img(img_filename)
+    height, width = len(image), len(image[0])
+    blurred_img = [[None] * width for _ in range(height)]
 
-    pass  # use matrix_avg from previous kata 2 or implement....
+    for i in range(height):
+        for j in range(width):
+            neighbors = []
+            for di in (-1, 0, 1):
+                for dj in (-1, 0, 1):
+                    ni, nj = i + di, j + dj
+                    if 0 <= ni < height and 0 <= nj < width:
+                        neighbors.append(image[ni][nj])
+            avg_pixel = tuple(
+                sum(p[k] for p in neighbors) // len(neighbors)
+                for k in range(len(neighbors[0]))
+            )
+            blurred_img[i][j] = avg_pixel
 
-    # use the below line to save list as image
-    # save_img(blured_img, f'blured_{img_filename}')
+    save_img(blurred_img, f'blured_{img_filename}')
 
 
+# -------------------- 3 Kata --------------------
 def apache_logs_parser(apache_single_log):
-    """
-    3 Kata
+    pattern = re.compile(
+        r"\[(?P<date>[^\]]+)\]\s"
+        r"\[[^:]+:(?P<level>[^\]]+)\]\s"
+        r"\[pid\s(?P<pid>\d+):tid\s(?P<tid>\d+)\]\s"
+        r"\[client\s(?P<ip>[^\]]+)\]\s"
+        r"(?P<message>.*)"
+    )
+    match = pattern.match(apache_single_log)
+    if not match:
+        raise ValueError("Log line doesn't match format")
 
-    Parses apache log (see format here https://httpd.apache.org/docs/2.4/logs.html)
-    e.g.
-    [Fri Sep 09 10:42:29.902022 2011] [core:error] [pid 35708:tid 4328636416] [client 72.15.99.187] File does not exist: /usr/local/apache2/htdocs/favicon.ico
+    date_str = match.group("date")
+    date = datetime.strptime(date_str, "%a %b %d %H:%M:%S.%f %Y")
 
-    the parsed log data should be:
-    date (datetime object), level (str), pid (int), thread_id (int), client_ip (str), log (str)
-
-    Hint: use regex
-
-    :param apache_single_log: str
-    :return: parsed log data as tuple
-    """
-    date, level, pid, tid, client_ip, log = ..., ..., ..., ..., ..., ...
-    return date, level, pid, tid, client_ip, log
+    return (
+        date,
+        match.group("level"),
+        int(match.group("pid")),
+        int(match.group("tid")),
+        match.group("ip"),
+        match.group("message"),
+    )
 
 
+# -------------------- 2 Kata --------------------
 def simple_http_request():
-    """
-    2 Kata
-
-    This function returns Binance market data JSON by performing a simple HTTP request to '/api/v3/exchangeInfo' endpoint
-
-    Hint: use requests.get(...)
-    Hint: Binance api docs https://binance-docs.github.io/apidocs/spot/en/#market-data-endpoints
-
-    :return: json of market exchange information
-    """
-    return None
+    url = "https://api.binance.com/api/v3/exchangeInfo"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
 
 
+# -------------------- 8 Kata --------------------
 class SortedDict(dict):
-    """
-    8 Kata
-
-    Implement SortedDict class which is a regular Python dictionary,
-    but the keys are maintained in sorted order
-
-    Usage example:
-    x = SortedDict()
-
-    x['banana'] = 'ccc'
-    x['apple'] = 'aaa'
-    x['orange'] = 'bbb'
-
-    list(x.keys())
-    >> ['apple', 'banana', 'orange']
-
-    list(x.values())
-    >> ['aaa', 'ccc', 'bbb']
-
-    list(x.items())
-    >> [('apple', 'aaa'), ('banana', 'ccc'), ('orange', 'bbb')]
-    """
-
-    def __init__(self):
-        super().__init__()
-        pass
-
-    def __setattr__(self, key, value):
-        pass
+    def keys(self):
+        return sorted(super().keys())
 
     def items(self):
-        raise NotImplemented()
+        return [(k, self[k]) for k in self.keys()]
 
     def values(self):
-        raise NotImplemented()
-
-    def keys(self):
-        raise NotImplemented()
+        return [self[k] for k in self.keys()]
 
 
+# -------------------- 8 Kata --------------------
 class CacheList(list):
-    """
-    8 Kata
-
-    Implement CacheList class which is a regular Python list,
-    but it holds the last n elements only (old elements will be deleted)
-
-    Usage example:
-    x = CacheList(3)
-
-    x.append(1)
-    x.append(2)
-    x.append(3)
-
-    print(x)
-    >> [1, 2, 3]
-
-    x.append(1)
-    print(x)
-    >> [2, 3, 1]
-
-    x.append(1)
-    print(x)
-    >> [3, 1, 1]
-    """
     def __init__(self, cache_size=5):
         super().__init__()
-        pass
+        self.cache_size = cache_size
 
     def append(self, element):
-        pass
+        if len(self) >= self.cache_size:
+            self.pop(0)
+        super().append(element)
 
 
+# -------------------- Main --------------------
 if __name__ == '__main__':
-    import time
     from random import random
-    from datetime import datetime
 
     print('\nknapsack\n--------------------')
     res = knapsack({
@@ -245,11 +208,11 @@ if __name__ == '__main__':
     print(res)
 
     print('\ntime_me\n--------------------')
-    time_took = time_me(lambda: time.sleep(5 + random()))
+    time_took = time_me(lambda: sum(range(1000)))
     print(time_took)
 
-    print('\nyoutube_download\n--------------------')
-    youtube_download('Urdlvw0SSEc')
+    # print('\nyoutube_download\n--------------------')
+    # youtube_download('Urdlvw0SSEc')
 
     print('\ntasks_scheduling\n--------------------')
     tasks = tasks_scheduling([
@@ -263,41 +226,34 @@ if __name__ == '__main__':
     print(tasks)
 
     print('\nvalid_dag\n--------------------')
-
-    # valid
     print(valid_dag([('a', 'b'), ('a', 'c'), ('a', 'd'), ('a', 'e'), ('b', 'd'), ('c', 'd'), ('c', 'e')]))
-
-    # invalid
     print(valid_dag([('a', 'b'), ('c', 'a'), ('a', 'd'), ('a', 'e'), ('b', 'd'), ('c', 'd'), ('c', 'e')]))
 
-    print('\nrotate_img\n--------------------')
-    rotate_img('67203.jpeg')
+    # print('\nrotate_img\n--------------------')
+    # rotate_img('67203.jpeg')
 
-    print('\nimg_blur\n--------------------')
-    img_blur('67203.jpeg')
+    # print('\nimg_blur\n--------------------')
+    # img_blur('67203.jpeg')
 
     print('\napache_logs_parser\n--------------------')
-    date, level, pid, tid, client_ip, log = apache_logs_parser('[Fri Sep 09 10:42:29.902022 2011] [core:error] [pid 35708:tid 4328636416] [client 72.15.99.187] File does not exist: /usr/local/apache2/htdocs/favicon.ico')
-    print(date, level, pid, tid, client_ip, log)
+    log_line = '[Fri Sep 09 10:42:29.902022 2011] [core:error] [pid 35708:tid 4328636416] [client 72.15.99.187] File does not exist: /usr/local/apache2/htdocs/favicon.ico'
+    print(apache_logs_parser(log_line))
 
     print('\nsimple_http_request\n--------------------')
     info = simple_http_request()
+    print("Binance symbols count:", len(info["symbols"]))
 
     print('\nSortedDict\n--------------------')
     s_dict = SortedDict()
-    s_dict['a'] = None
-    s_dict['t'] = None
-    s_dict['h'] = None
-    s_dict['q'] = None
-    s_dict['b'] = None
+    s_dict['a'] = 1
+    s_dict['t'] = 2
+    s_dict['h'] = 3
+    s_dict['q'] = 4
+    s_dict['b'] = 5
     print(s_dict.items())
 
     print('\nCacheList\n--------------------')
     c_list = CacheList(5)
-    c_list.append(1)
-    c_list.append(2)
-    c_list.append(3)
-    c_list.append(4)
-    c_list.append(5)
-    c_list.append(6)
+    for i in range(1, 7):
+        c_list.append(i)
     print(c_list)
