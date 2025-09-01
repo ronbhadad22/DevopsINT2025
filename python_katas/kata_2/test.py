@@ -3,21 +3,31 @@ import unittest
 import shutil
 import tarfile
 import io
-from contextlib import redirect_stdout
-from datetime import datetime
-from python_katas.kata_2 import questions
-from python_katas.utils import unittest_runner
+import contextlib  # Import module, not individual functions
+import datetime as dt  # Import as dt to avoid docstring conflict
+import json
+import tempfile
+import sys
+
+# Direct import of local questions module
+import questions
+
+# Add parent directory to path to import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import unittest_runner
+
+# Import specific functions directly from questions module
 from questions import replace_in_file
 from questions import json_configs_merge
-import json
 from questions import files_backup
-import datetime
 from questions import most_frequent_name
-import tempfile
 
 testers = ['roee', 'david', 'tal gold']
 
 class TestValidParentheses(unittest.TestCase):
+    """
+    2 Kata
+    """
 
 
     def test_valid_strings(self):
@@ -49,6 +59,9 @@ class TestValidParentheses(unittest.TestCase):
 
 
 class TestFibonacciFixme(unittest.TestCase):
+    """
+    2 Kata
+    """
 
 
     def test_fibonacci_fixme_first_two_terms(self):
@@ -82,6 +95,9 @@ class TestFibonacciFixme(unittest.TestCase):
 
 
 class TestMostFrequentName(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def create_temp_file(self, content):
         temp = tempfile.NamedTemporaryFile(mode='w+', delete=False)
@@ -115,6 +131,9 @@ class TestMostFrequentName(unittest.TestCase):
 
 
 class TestFilesBackup(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def setUp(self):
         self.test_dir = 'test_directory'
@@ -128,7 +147,7 @@ class TestFilesBackup(unittest.TestCase):
             os.remove(os.path.join(self.test_dir, filename))
         os.rmdir(self.test_dir)
 
-        today = datetime.date.today().isoformat()
+        today = dt.date.today().isoformat()
         backup_filename = f'backup_{os.path.basename(self.test_dir)}_{today}.tar.gz'
         if os.path.exists(backup_filename):
             os.remove(backup_filename)
@@ -136,7 +155,7 @@ class TestFilesBackup(unittest.TestCase):
     def test_backup_file_created(self):
         backup_file = files_backup(self.test_dir)
 
-        today = datetime.date.today().isoformat()
+        today = dt.date.today().isoformat()
         expected_filename = f'backup_{os.path.basename(self.test_dir)}_{today}.tar.gz'
         self.assertEqual(backup_file, expected_filename)
 
@@ -149,6 +168,9 @@ class TestFilesBackup(unittest.TestCase):
 
 
 class TestReplaceInFile(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def setUp(self):
         self.test_file = 'test_replace.txt'
@@ -196,6 +218,9 @@ class TestReplaceInFile(unittest.TestCase):
 
 
 class TestJsonConfigsMerge(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def setUp(self):
         self.temp_files = []
@@ -235,6 +260,9 @@ class TestJsonConfigsMerge(unittest.TestCase):
 
 
 class TestMonotonicArray(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_strictly_increasing(self):
         self.assertTrue(questions.monotonic_array([1, 2, 3, 4]))
@@ -289,6 +317,9 @@ class TestMonotonicArray(unittest.TestCase):
 
 
 class TestMatrixAvg(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_matrix_average(self):
         matrix = [
@@ -310,6 +341,9 @@ class TestMatrixAvg(unittest.TestCase):
             questions.matrix_avg(matrix, rows=[3])
 
 class TestMergeSortedLists(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_both_empty(self):
         self.assertEqual(questions.merge_sorted_lists([], []), [])
@@ -338,6 +372,9 @@ class TestMergeSortedLists(unittest.TestCase):
 
 
 class TestLongestCommonSubstring(unittest.TestCase):
+    """
+    2 Kata
+    """
     def test_empty_strings(self):
         str1 = ''
         str2 = ''
@@ -367,6 +404,9 @@ class TestLongestCommonSubstring(unittest.TestCase):
         self.assertEqual(questions.longest_common_substring(str1, str2), output)
 
 class TestLongestCommonPrefix(unittest.TestCase):
+    """
+    2 Kata
+    """
     
     def test_empty_strings(self):
         str1 = ''
@@ -400,6 +440,9 @@ class TestLongestCommonPrefix(unittest.TestCase):
     
 
 class TestRotateMatrix(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_empty_matrix(self):
         input = []
@@ -422,6 +465,9 @@ class TestRotateMatrix(unittest.TestCase):
         self.assertEqual(questions.rotate_matrix(input), outpoot)
 
 class TestIsValidEmail(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_valid_emails(self):
         self.assertTrue(questions.is_valid_email('roieharkavi@gmail.com'))
@@ -440,6 +486,9 @@ class TestIsValidEmail(unittest.TestCase):
         self.assertFalse(questions.is_valid_email('roieharkavi@dgdhh'))
 
 class TestPascalTriangle(unittest.TestCase):
+    """
+    2 Kata
+    """
     
     def test_empty_triangle(self):
         input = 0
@@ -458,6 +507,9 @@ class TestPascalTriangle(unittest.TestCase):
 
 
 class TestListFlatten(unittest.TestCase):
+    """
+    2 Kata
+    """
     
     def test_empty_list(self):
         input = []
@@ -465,7 +517,7 @@ class TestListFlatten(unittest.TestCase):
         self.assertEqual(questions.list_flatten(input), output)
     
     def test_empty_nested_lists(self):
-        input = [[[[][[]]]]]
+        input = [[[[], [[]]]]]
         output = []
         self.assertEqual(questions.list_flatten(input), output)
 
@@ -480,6 +532,9 @@ class TestListFlatten(unittest.TestCase):
         self.assertEqual(questions.list_flatten(input), output)
 
 class TestStrCompression(unittest.TestCase):
+    """
+    2 Kata
+    """
 
     def test_empty_string(self):
         input = ''
@@ -502,6 +557,9 @@ class TestStrCompression(unittest.TestCase):
         self.assertEqual(questions.str_compression(input), output)
 
 class TestStrongPass(unittest.TestCase):
+    """
+    2 Kata
+    """
     
     def test_valid_passwords(self):
         self.assertTrue(questions.strong_pass('Ab123!'))

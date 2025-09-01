@@ -1,6 +1,13 @@
 import unittest
-from python_katas.kata_1 import questions
-from python_katas.utils import unittest_runner
+import sys
+import os
+
+# Direct import of local questions module
+import questions
+
+# Add parent directory to path to import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import unittest_runner
 
 class TestSumOfElements(unittest.TestCase):
     """
