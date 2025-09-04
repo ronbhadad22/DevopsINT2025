@@ -1,0 +1,57 @@
+name: Upload to Nexus Repository
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  upload-to-nexus:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Clean previous builds
+      run: |
+        rm -rf build/ dist/ *.egg-info/
+        
+    - name: Build package
+      run: |
+        python -m build
+        
+    - name: Create .pypirc configuration
+      run: |
+        cat > .pypirc << EOF
+        [distutils]
+        index-servers = nexus
+        
+        [nexus]
+        repository: http://34.233.125.126:8081/repository/my-int-pypi/
+        username: admin
+        password: ${{ secrets.nexus_pass }}
+        EOF
+        
+    - name: Upload to Nexus
+      run: |
+        twine upload --config-file .pypirc --repository nexus dist/*
+        
+    - name: Clean up credentials
+      if: always()
+      run: |
+        rm -f .pypirc
