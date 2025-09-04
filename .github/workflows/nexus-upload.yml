@@ -46,7 +46,7 @@ jobs:
         index-servers = nexus
         
         [nexus]
-        repository: http://34.233.125.126:8081/repository/my-int-pypi/
+        repository: http://13.218.113.81:8081/repository/my-int-pypi/
         username: admin
         password: ${{ secrets.nexus_pass }}
         EOF
