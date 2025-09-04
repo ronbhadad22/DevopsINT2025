@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: nexus-example-package
+Version: 0.1.0
+Summary: A sample Python package for Nexus repository
+Home-page: https://github.com/yourusername/nexus-example-package
+Author: Your Name
+Author-email: Your Name <your.email@example.com>
+Project-URL: Homepage, https://github.com/yourusername/nexus-example-package
+Project-URL: Bug Tracker, https://github.com/yourusername/nexus-example-package/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Nexus Example Package
+
+A sample Python package demonstrating how to build and publish to a Nexus repository.
+
+## Installation
+
+```bash
+pip install nexus-example-package
+```
+
+## Usage
+
+```python
+from nexus_example_package import hello
+
+# Print a greeting
+hello.greet("World")
+
+# Get package version
+print(hello.get_version())
+```
+
+## Development
+
+### Building the package
+
+```bash
+python -m build
+```
+
+### Publishing to Nexus
+
+```bash
+python upload_to_nexus.py
+```
+
+## License
+
+MIT License

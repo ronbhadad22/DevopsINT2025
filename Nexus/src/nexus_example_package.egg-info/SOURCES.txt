@@ -1,0 +1,13 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+requirements.txt
+setup.py
+src/nexus_example_package/__init__.py
+src/nexus_example_package/hello.py
+src/nexus_example_package.egg-info/PKG-INFO
+src/nexus_example_package.egg-info/SOURCES.txt
+src/nexus_example_package.egg-info/dependency_links.txt
+src/nexus_example_package.egg-info/requires.txt
+src/nexus_example_package.egg-info/top_level.txt
