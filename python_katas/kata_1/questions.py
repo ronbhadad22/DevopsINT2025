@@ -27,8 +27,9 @@ def verbing(word):
 def words_concatenation(words):
     sentence = ''
     for i in words:
-        sentence += i + ' ' 
-    return sentence
+        sentence += i + ' '
+    return sentence.strip()
+
 
    
 
@@ -36,8 +37,12 @@ def words_concatenation(words):
 def reverse_words_concatenation(words):
     sentence = ''
     for i in words:
-        sentence = ' ' + i + sentence
+        if sentence:
+            sentence = i + ' ' + sentence
+        else:
+            sentence = i
     return sentence
+
 
 
 
@@ -51,24 +56,25 @@ def is_unique_string(some_str):
     return True
 
 
-
 def list_diff(elements):
+    if not elements:
+        return []
     diff = [None]
-    previous_num=elements[0]
-    for i in elements:
-        if i == elements[0]:
-            continue
-        diff.append(i-previous_num)
-        previous_num=i
+    previous_num = elements[0]
+    for i in elements[1:]:
+        diff.append(i - previous_num)
+        previous_num = i
     return diff
 
 
 def prime_number(num):
-    prime_check=list(range(2,num))
-    for i in prime_check:
-        if num%i==0:
+    if num < 2:
+        return False
+    for i in range(2, int(num ** 0.5) + 1):
+        if num % i == 0:
             return False
     return True
+
 
 
 def palindrome_num(num):

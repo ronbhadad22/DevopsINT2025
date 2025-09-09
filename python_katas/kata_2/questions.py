@@ -10,21 +10,33 @@ def valid_parentheses(s):
 
 
 def fibonacci_fixme(n):
+
+    if not isinstance(n, int):
+        raise TypeError("Input must be an integer")
+
+    if n <= 0:
+        raise ValueError("Input must be a positive integer")
+
     if n == 1 or n == 2:
         return 1
+
     a, b = 1, 1
     for _ in range(3, n + 1):
         a, b = b, a + b
     return b
 
-import os
+
+from collections import Counter
 
 def most_frequent_name(file_path):
-    from collections import Counter
     base_dir = os.path.dirname(__file__)
     full_path = os.path.join(base_dir, file_path)
     with open(full_path, "r") as file:
-        names = [line.strip() for line in file]
+        names = [line.strip() for line in file if line.strip()]
+
+    if not names:
+        raise ValueError("File is empty or contains no valid names")
+
     name_counts = Counter(names)
     return name_counts.most_common(1)[0][0]
 
@@ -32,6 +44,9 @@ def most_frequent_name(file_path):
 
 
 
+
+
+import os
 import tarfile
 from datetime import date
 
@@ -41,8 +56,14 @@ def files_backup(dir_path):
     dir_name = os.path.basename(os.path.normpath(dir_path))
     today_str = date.today().strftime("%Y-%m-%d")
     backup_filename = f"backup_{dir_name}_{today_str}.tar.gz"
+
     with tarfile.open(backup_filename, "w:gz") as tar:
-        tar.add(dir_path, arcname=dir_name)
+        for root, dirs, files in os.walk(dir_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, start=dir_path)
+                tar.add(file_path, arcname=arcname)
+
     return backup_filename
 
 
@@ -105,7 +126,7 @@ def matrix_avg(mat, rows=None):
         for value in mat[r]:
             total += value
             count += 1
-    return total // count
+    return total / count
 
 
 def merge_sorted_lists(l1, l2):

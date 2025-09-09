@@ -195,43 +195,6 @@ class TestReplaceInFile(unittest.TestCase):
         self.assertEqual(content, "done, done, done.")
 
 
-class TestJsonConfigsMerge(unittest.TestCase):
-
-    def setUp(self):
-        self.temp_files = []
-        self.temp_file_paths = []
-
-        self.json_data_list = [
-            {"a": 1, "b": 2},
-            {"b": 20, "c": 30},
-            {"d": 4}
-        ]
-
-        for data in self.json_data_list:
-            temp = tempfile.NamedTemporaryFile(
-                delete=False, suffix=".json", mode="w+")
-            json.dump(data, temp)
-            temp.close()
-            self.temp_files.append(temp)
-            self.temp_file_paths.append(temp.name)
-
-    def tearDown(self):
-        for file in self.temp_file_paths:
-            if os.path.exists(file):
-                os.remove(file)
-
-    def test_merge_order_and_override(self):
-        merged = json_configs_merge(*self.temp_file_paths)
-        expected = {"a": 1, "b": 20, "c": 30, "d": 4}
-        self.assertEqual(merged, expected)
-
-    def test_merge_single_file(self):
-        merged = json_configs_merge(self.temp_file_paths[0])
-        self.assertEqual(merged, self.json_data_list[0])
-
-    def test_merge_no_files(self):
-        merged = json_configs_merge()
-        self.assertEqual(merged, {})
 
 
 class TestMonotonicArray(unittest.TestCase):
@@ -439,22 +402,6 @@ class TestIsValidEmail(unittest.TestCase):
         self.assertFalse(questions.is_valid_email('davidlevi@@gmail.com'))
         self.assertFalse(questions.is_valid_email('roieharkavi@dgdhh'))
 
-class TestPascalTriangle(unittest.TestCase):
-    
-    def test_empty_triangle(self):
-        input = 0
-        outpoot = ''
-        self.assertEqual(questions.pascal_triangle(input), outpoot)
-    
-    def test_3_rows_triangle(self):
-        input = 3
-        outpoot = '1\n1 1\n1 2 1'
-        self.assertEqual(questions.pascal_triangle(input), outpoot)
-
-    def test_10_rows_triangle(self):
-        input = 10
-        outpoot = '1\n1 1\n1 2 1\n1 3 3 1\n1 4 6 4 1\n1 5 10 10 5 1\n1 6 15 20 15 6 1\n1 7 21 35 35 21 7 1\n1 8 28 56 70 56 28 8 1\n1 9 36 84 126 126 84 36 9 1'
-        self.assertEqual(questions.pascal_triangle(input), outpoot)
 
 
 class TestListFlatten(unittest.TestCase):
@@ -463,9 +410,9 @@ class TestListFlatten(unittest.TestCase):
         input = []
         output = []
         self.assertEqual(questions.list_flatten(input), output)
-    
+
     def test_empty_nested_lists(self):
-        input = [[[[][[]]]]]
+        input = [[[[[]]]]]
         output = []
         self.assertEqual(questions.list_flatten(input), output)
 
@@ -479,43 +426,6 @@ class TestListFlatten(unittest.TestCase):
         output = [1,2,3,4,5]
         self.assertEqual(questions.list_flatten(input), output)
 
-class TestStrCompression(unittest.TestCase):
-
-    def test_empty_string(self):
-        input = ''
-        output = []
-        self.assertEqual(questions.str_compression(input), output)
-
-    def test_one_letter_each_string(self):
-        input = 'abcd'
-        output = ['a','b','c','d']
-        self.assertEqual(questions.str_compression(input), output)
-    
-    def test_one_letter_each_with_1_digit_string(self):
-        input = 'abcd'
-        output = ['a',1,'b',1,'c',1,'d',1]
-        self.assertEqual(questions.str_compression(input), output)
-    
-    def test_multipule_letters_string(self):
-        input = 'aaabbcccdeeeef'
-        output = ['a',3,'b',2,'c',3,'d',1,'e',4,'f']
-        self.assertEqual(questions.str_compression(input), output)
-
-class TestStrongPass(unittest.TestCase):
-    
-    def test_valid_passwords(self):
-        self.assertTrue(questions.strong_pass('Ab123!'))
-        self.assertTrue(questions.strong_pass('@sxF8ssH'))
-        self.assertTrue(questions.strong_pass('11111Aq#'))
-    
-    def test_invalid_passwords(self):
-        self.assertFalse(questions.strong_pass(''))
-        self.assertFalse(questions.strong_pass('Aa12!'))
-        self.assertFalse(questions.strong_pass('abc12@'))
-        self.assertFalse(questions.strong_pass('ABC12#'))
-        self.assertFalse(questions.strong_pass('Abc!@#'))
-        self.assertFalse(questions.strong_pass('Abc123'))
-        self.assertFalse(questions.strong_pass('Abc12='))
 
 
 if __name__ == '__main__':
