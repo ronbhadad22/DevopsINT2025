@@ -20,6 +20,11 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    
     defaults:
       run:
         working-directory: ./course-site-with-nodejs-backend/server-nodejs
@@ -80,6 +85,12 @@ jobs:
         npx @cyclonedx/cyclonedx-npm --output-file sbom.json
         echo "✅ SBOM generated successfully"
         
+    - name: Attest SBOM
+      uses: actions/attest-sbom@v1
+      with:
+        subject-path: ./course-site-with-nodejs-backend/server-nodejs/sbom.json
+        sbom-path: ./course-site-with-nodejs-backend/server-nodejs/sbom.json
+        
     - name: Upload SBOM artifact
       uses: actions/upload-artifact@v4
       with:
@@ -95,6 +106,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
       
     steps:
     - name: Checkout code
@@ -163,12 +176,14 @@ jobs:
           type=raw,value=latest,enable={{is_default_branch}}
           
     - name: Build and push Docker image
+      id: build
       uses: docker/build-push-action@v5
       with:
         context: ./course-site-with-nodejs-backend/server-nodejs
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
         
     - name: Generate Container SBOM
       run: |
@@ -195,6 +210,26 @@ jobs:
           ./container-sbom.json
           ./vulnerability-report.json
         retention-days: 90
+        
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3.1.1
+      with:
+        cosign-release: 'v2.2.0'
+        
+    - name: Sign container image
+      env:
+        COSIGN_EXPERIMENTAL: 1
+      run: |
+        echo "🔐 Signing container image with Cosign..."
+        cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        echo "✅ Container image signed successfully"
+        
+    - name: Generate SLSA attestation
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        subject-digest: ${{ steps.build.outputs.digest }}
+        push-to-registry: true
 
   deploy-staging:
     needs: [build-docker]
