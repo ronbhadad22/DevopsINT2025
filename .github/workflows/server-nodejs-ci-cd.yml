@@ -81,7 +81,7 @@ jobs:
         echo "✅ SBOM generated successfully"
         
     - name: Upload SBOM artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sbom-${{ github.sha }}
         path: ./course-site-with-nodejs-backend/server-nodejs/sbom.json
@@ -187,7 +187,7 @@ jobs:
         echo "✅ Vulnerability scan completed"
         
     - name: Upload SBOM and vulnerability reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sbom-reports-${{ github.sha }}
         path: |
