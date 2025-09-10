@@ -129,6 +129,11 @@ jobs:
         
         # Generate SBOM from package.json
         cd course-site-with-nodejs-backend/server-nodejs
+        
+        # Install dependencies first
+        npm install
+        
+        # Generate SBOM with dependencies installed
         cyclonedx-npm --output-file ../../nodejs-dependencies-sbom.json
         cd ../..
         
