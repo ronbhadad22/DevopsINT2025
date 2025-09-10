@@ -109,20 +109,20 @@ Create an IAM role with the following permissions:
 
 ## 🔐 GitHub Secrets Configuration
 
-Add the following secrets to your GitHub repository:
+Configure the following secrets in your GitHub repository settings:
 
 ```
-AWS_ROLE_ARN              # ARN of the IAM role for GitHub Actions
-AWS_ACCOUNT_ID            # Your AWS Account ID
+AWS_ACCOUNT_ID            # Your AWS Account ID (950555670656)
 AWS_S3_SBOM_BUCKET       # S3 bucket name for SBOM storage (optional)
 ```
 
 ### Example Values:
 ```
-AWS_ROLE_ARN=arn:aws:iam::123456789012:role/GitHubActionsRole
-AWS_ACCOUNT_ID=123456789012
-AWS_S3_SBOM_BUCKET=my-company-sbom-bucket
+AWS_ACCOUNT_ID: 950555670656
+AWS_S3_SBOM_BUCKET: my-company-sbom-storage
 ```
+
+**Note**: The AWS role ARN `arn:aws:iam::950555670656:role/github-oidc` is already configured in the workflows.
 
 ## 📋 Workflow Features
 
