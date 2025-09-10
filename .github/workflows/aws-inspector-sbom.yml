@@ -15,7 +15,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: server-nodejs
+  ECR_REPOSITORY: int/server-nodejs
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/server-nodejs
 
