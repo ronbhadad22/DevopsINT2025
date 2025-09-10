@@ -160,7 +160,7 @@ jobs:
     - name: Upload SBOM to S3
       run: |
         echo "☁️ Uploading SBOM to S3..."
-        BUCKET_NAME="${{ secrets.AWS_S3_SBOM_BUCKET }}"
+        BUCKET_NAME="sbom-int-inspector-data"
         
         if [ ! -z "$BUCKET_NAME" ]; then
           # Upload all Inspector SBOM files to S3
