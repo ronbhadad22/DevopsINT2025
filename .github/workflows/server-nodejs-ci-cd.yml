@@ -183,22 +183,25 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
         
     - name: Generate Container SBOM
       run: |
         echo "📋 Generating container SBOM with Syft..."
+        # Use the first tag from the metadata output
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Scanning image: $IMAGE_TAG"
         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-          anchore/syft:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-          -o spdx-json=container-sbom.json
+          -v "$(pwd)":/workspace \
+          anchore/syft:latest "$IMAGE_TAG" \
+          -o spdx-json=/workspace/container-sbom.json
         echo "✅ Container SBOM generated successfully"
         
     - name: Scan SBOM for vulnerabilities
       run: |
         echo "🔍 Scanning SBOM for vulnerabilities with Grype..."
         docker run --rm -v "$(pwd)":/workspace \
-          anchore/grype:latest sbom:./container-sbom.json \
-          -o json --file vulnerability-report.json
+          anchore/grype:latest sbom:/workspace/container-sbom.json \
+          -o json --file /workspace/vulnerability-report.json
         echo "✅ Vulnerability scan completed"
         
     - name: Upload SBOM and vulnerability reports
@@ -221,7 +224,8 @@ jobs:
         COSIGN_EXPERIMENTAL: 1
       run: |
         echo "🔐 Signing container image with Cosign..."
-        cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        cosign sign --yes "$IMAGE_TAG"
         echo "✅ Container image signed successfully"
         
     - name: Generate SLSA attestation
