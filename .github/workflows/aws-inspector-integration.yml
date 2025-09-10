@@ -102,12 +102,24 @@ jobs:
           --output json > inspector-findings-raw.json
           
         # Get detailed findings
-        if [ -s inspector-findings-raw.json ] && [ "$(jq '.findings | length' inspector-findings-raw.json)" -gt 0 ]; then
-          FINDING_ARNS=$(jq -r '.findings[].findingArn' inspector-findings-raw.json | tr '\n' ' ')
-          if [ ! -z "$FINDING_ARNS" ]; then
-            aws inspector2 batch-get-finding-details \
-              --finding-arns $FINDING_ARNS \
-              --output json > inspector-findings-detailed.json
+        if [ -s inspector-findings-raw.json ]; then
+          # Check if findings exist and get count properly
+          FINDINGS_COUNT=$(jq 'if type == "array" then length else (.findings // [] | length) end' inspector-findings-raw.json)
+          if [ "$FINDINGS_COUNT" -gt 0 ]; then
+            # Extract finding ARNs based on JSON structure
+            if jq -e 'type == "array"' inspector-findings-raw.json > /dev/null 2>&1; then
+              FINDING_ARNS=$(jq -r '.[].findingArn' inspector-findings-raw.json | tr '\n' ' ')
+            else
+              FINDING_ARNS=$(jq -r '.findings[].findingArn' inspector-findings-raw.json | tr '\n' ' ')
+            fi
+            
+            if [ ! -z "$FINDING_ARNS" ]; then
+              aws inspector2 batch-get-finding-details \
+                --finding-arns $FINDING_ARNS \
+                --output json > inspector-findings-detailed.json
+            else
+              echo '{"findingDetails": []}' > inspector-findings-detailed.json
+            fi
           else
             echo '{"findingDetails": []}' > inspector-findings-detailed.json
           fi

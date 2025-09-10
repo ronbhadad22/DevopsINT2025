@@ -160,7 +160,12 @@ jobs:
         # Process Inspector findings if available
         if [ -f inspector-findings.json ] && [ -s inspector-findings.json ]; then
           echo "Processing Inspector findings..."
-          jq '.findings // []' inspector-findings.json > processed-findings.json
+          # Check if the JSON is an array or has a findings property
+          if jq -e 'type == "array"' inspector-findings.json > /dev/null 2>&1; then
+            cp inspector-findings.json processed-findings.json
+          else
+            jq '.findings // []' inspector-findings.json > processed-findings.json
+          fi
         else
           echo "[]" > processed-findings.json
         fi
