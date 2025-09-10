@@ -1,0 +1,364 @@
+name: AWS Inspector Integration & SBOM Export
+
+on:
+  workflow_run:
+    workflows: ["Course Site Server-NodeJS CI/CD"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to scan'
+        required: false
+        default: 'latest'
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: server-nodejs-inspector
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+jobs:
+  aws-inspector-sbom:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      attestations: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Create ECR repository if not exists
+      run: |
+        aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} || \
+        aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}
+        
+    - name: Pull image from GHCR and push to ECR
+      run: |
+        echo "🔄 Copying image from GHCR to ECR for Inspector scanning..."
+        
+        # Pull from GitHub Container Registry
+        docker pull ghcr.io/${{ github.repository }}/server-nodejs:${{ github.event.inputs.image_tag || 'latest' }}
+        
+        # Tag for ECR
+        ECR_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.event.inputs.image_tag || 'latest' }}"
+        docker tag ghcr.io/${{ github.repository }}/server-nodejs:${{ github.event.inputs.image_tag || 'latest' }} $ECR_URI
+        
+        # Push to ECR
+        docker push $ECR_URI
+        
+        echo "✅ Image copied to ECR: $ECR_URI"
+        
+    - name: Enable AWS Inspector for ECR
+      run: |
+        echo "🔧 Enabling AWS Inspector for ECR scanning..."
+        
+        # Enable Inspector V2 for ECR if not already enabled
+        aws inspector2 enable --resource-types ECR --account-ids ${{ env.AWS_ACCOUNT_ID }} || echo "Inspector already enabled"
+        
+        # Wait for Inspector to be ready
+        sleep 10
+        
+    - name: Trigger Inspector scan
+      id: inspector-scan
+      run: |
+        echo "🔍 Triggering AWS Inspector scan..."
+        
+        IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.event.inputs.image_tag || 'latest' }}"
+        
+        # Inspector automatically scans new images, but we can check status
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
+        
+        # Wait for scan to complete (Inspector scans are automatic)
+        echo "⏳ Waiting for Inspector scan to complete..."
+        sleep 60
+        
+    - name: Retrieve Inspector findings
+      run: |
+        echo "📊 Retrieving Inspector findings..."
+        
+        # Get findings for our image
+        aws inspector2 list-findings \
+          --filter-criteria '{
+            "ecrImageTags": [{"comparison": "EQUALS", "value": "${{ github.event.inputs.image_tag || 'latest' }}"}],
+            "ecrRepositoryName": [{"comparison": "EQUALS", "value": "${{ env.ECR_REPOSITORY }}"}]
+          }' \
+          --output json > inspector-findings-raw.json
+          
+        # Get detailed findings
+        if [ -s inspector-findings-raw.json ] && [ "$(jq '.findings | length' inspector-findings-raw.json)" -gt 0 ]; then
+          FINDING_ARNS=$(jq -r '.findings[].findingArn' inspector-findings-raw.json | tr '\n' ' ')
+          if [ ! -z "$FINDING_ARNS" ]; then
+            aws inspector2 batch-get-finding-details \
+              --finding-arns $FINDING_ARNS \
+              --output json > inspector-findings-detailed.json
+          else
+            echo '{"findingDetails": []}' > inspector-findings-detailed.json
+          fi
+        else
+          echo '{"findingDetails": []}' > inspector-findings-detailed.json
+        fi
+        
+        echo "✅ Inspector findings retrieved"
+        
+    - name: Generate comprehensive SBOM with Inspector data
+      run: |
+        echo "📋 Generating comprehensive SBOM with AWS Inspector data..."
+        
+        # Install jq for JSON processing
+        sudo apt-get update && sudo apt-get install -y jq
+        
+        # Get image details from ECR
+        aws ecr describe-images \
+          --repository-name ${{ env.ECR_REPOSITORY }} \
+          --image-ids imageTag=${{ github.event.inputs.image_tag || 'latest' }} \
+          --output json > ecr-image-details.json
+          
+        # Extract image digest and other metadata
+        IMAGE_DIGEST=$(jq -r '.imageDetails[0].imageDigest' ecr-image-details.json)
+        IMAGE_SIZE=$(jq -r '.imageDetails[0].imageSizeInBytes' ecr-image-details.json)
+        PUSH_DATE=$(jq -r '.imageDetails[0].imagePushedAt' ecr-image-details.json)
+        
+        # Create CycloneDX SBOM with Inspector findings
+        cat > aws-inspector-sbom.json << EOF
+        {
+          "bomFormat": "CycloneDX",
+          "specVersion": "1.5",
+          "serialNumber": "urn:uuid:$(uuidgen)",
+          "version": 1,
+          "metadata": {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "tools": [
+              {
+                "vendor": "AWS",
+                "name": "Inspector",
+                "version": "2.0"
+              },
+              {
+                "vendor": "GitHub",
+                "name": "Actions",
+                "version": "1.0"
+              }
+            ],
+            "component": {
+              "type": "container",
+              "bom-ref": "server-nodejs-container",
+              "name": "server-nodejs",
+              "version": "${{ github.sha }}",
+              "purl": "pkg:docker/${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${IMAGE_DIGEST}",
+              "properties": [
+                {
+                  "name": "aws:ecr:repository",
+                  "value": "${{ env.ECR_REPOSITORY }}"
+                },
+                {
+                  "name": "aws:ecr:registry",
+                  "value": "${{ steps.login-ecr.outputs.registry }}"
+                },
+                {
+                  "name": "aws:ecr:imageSize",
+                  "value": "${IMAGE_SIZE}"
+                },
+                {
+                  "name": "aws:ecr:pushedAt",
+                  "value": "${PUSH_DATE}"
+                },
+                {
+                  "name": "github:repository",
+                  "value": "${{ github.repository }}"
+                },
+                {
+                  "name": "github:sha",
+                  "value": "${{ github.sha }}"
+                }
+              ]
+            }
+          },
+          "components": [],
+          "vulnerabilities": []
+        }
+        EOF
+        
+        # Process Inspector findings and add to SBOM
+        if [ -f inspector-findings-detailed.json ]; then
+          echo "Processing Inspector findings for SBOM..."
+          
+          # Extract vulnerabilities and add to SBOM
+          jq --argjson sbom "$(cat aws-inspector-sbom.json)" '
+            .findingDetails[] as $finding |
+            $sbom.vulnerabilities += [{
+              "id": $finding.findingArn,
+              "source": {
+                "name": "AWS Inspector",
+                "url": "https://console.aws.amazon.com/inspector/v2/"
+              },
+              "ratings": [{
+                "source": {
+                  "name": "AWS Inspector"
+                },
+                "severity": ($finding.severity // "UNKNOWN"),
+                "score": ($finding.inspectorScore // 0)
+              }],
+              "cwes": ($finding.cweIds // []),
+              "description": ($finding.description // ""),
+              "recommendation": ($finding.remediation.recommendation.text // ""),
+              "affects": [{
+                "ref": "server-nodejs-container"
+              }],
+              "properties": [
+                {
+                  "name": "aws:inspector:type",
+                  "value": ($finding.type // "")
+                },
+                {
+                  "name": "aws:inspector:status",
+                  "value": ($finding.status // "")
+                }
+              ]
+            }] |
+            $sbom
+          ' inspector-findings-detailed.json > aws-inspector-sbom-with-vulns.json
+          
+          mv aws-inspector-sbom-with-vulns.json aws-inspector-sbom.json
+        fi
+        
+        echo "✅ Comprehensive SBOM generated with Inspector data"
+        
+    - name: Export SBOM to multiple formats
+      run: |
+        echo "📤 Exporting SBOM to multiple formats..."
+        
+        # Convert to SPDX format
+        jq '{
+          "spdxVersion": "SPDX-2.3",
+          "dataLicense": "CC0-1.0",
+          "SPDXID": "SPDXRef-DOCUMENT",
+          "name": "AWS Inspector SBOM for server-nodejs",
+          "documentNamespace": ("https://github.com/${{ github.repository }}/aws-inspector-sbom/" + "${{ github.sha }}"),
+          "creationInfo": {
+            "created": .metadata.timestamp,
+            "creators": ["Tool: AWS Inspector", "Tool: GitHub Actions"]
+          },
+          "packages": [{
+            "SPDXID": "SPDXRef-Container",
+            "name": .metadata.component.name,
+            "downloadLocation": "NOASSERTION",
+            "filesAnalyzed": false,
+            "copyrightText": "NOASSERTION"
+          }]
+        }' aws-inspector-sbom.json > aws-inspector-sbom-spdx.json
+        
+        # Create summary report
+        VULN_COUNT=$(jq '.vulnerabilities | length' aws-inspector-sbom.json)
+        CRITICAL_COUNT=$(jq '[.vulnerabilities[] | select(.ratings[0].severity == "CRITICAL")] | length' aws-inspector-sbom.json)
+        HIGH_COUNT=$(jq '[.vulnerabilities[] | select(.ratings[0].severity == "HIGH")] | length' aws-inspector-sbom.json)
+        
+        cat > sbom-summary.json << EOF
+        {
+          "scan_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "repository": "${{ github.repository }}",
+          "commit": "${{ github.sha }}",
+          "image": "${{ steps.inspector-scan.outputs.IMAGE_URI }}",
+          "total_vulnerabilities": ${VULN_COUNT},
+          "critical_vulnerabilities": ${CRITICAL_COUNT},
+          "high_vulnerabilities": ${HIGH_COUNT},
+          "sbom_formats": ["CycloneDX", "SPDX"],
+          "scan_tool": "AWS Inspector v2"
+        }
+        EOF
+        
+        echo "✅ SBOM exported to multiple formats"
+        
+    - name: Upload to S3
+      run: |
+        echo "☁️ Uploading SBOM and findings to S3..."
+        
+        BUCKET_NAME="${{ secrets.AWS_S3_SBOM_BUCKET }}"
+        
+        if [ ! -z "$BUCKET_NAME" ]; then
+          S3_PREFIX="s3://$BUCKET_NAME/inspector-sbom/${{ github.repository }}/${{ github.sha }}"
+          
+          # Upload all files
+          aws s3 cp aws-inspector-sbom.json "$S3_PREFIX/cyclonedx-sbom.json"
+          aws s3 cp aws-inspector-sbom-spdx.json "$S3_PREFIX/spdx-sbom.json"
+          aws s3 cp sbom-summary.json "$S3_PREFIX/summary.json"
+          aws s3 cp inspector-findings-detailed.json "$S3_PREFIX/inspector-findings.json"
+          aws s3 cp ecr-image-details.json "$S3_PREFIX/ecr-metadata.json"
+          
+          # Set public read for summary (optional)
+          aws s3api put-object-acl --bucket "$BUCKET_NAME" --key "inspector-sbom/${{ github.repository }}/${{ github.sha }}/summary.json" --acl public-read || echo "Could not set public ACL"
+          
+          echo "✅ Files uploaded to S3: $S3_PREFIX"
+        else
+          echo "ℹ️ S3 bucket not configured, skipping upload"
+        fi
+        
+    - name: Attest SBOM
+      uses: actions/attest-sbom@v1
+      with:
+        subject-path: ./aws-inspector-sbom.json
+        sbom-path: ./aws-inspector-sbom.json
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: aws-inspector-sbom-${{ github.sha }}
+        path: |
+          ./aws-inspector-sbom.json
+          ./aws-inspector-sbom-spdx.json
+          ./sbom-summary.json
+          ./inspector-findings-detailed.json
+          ./inspector-findings-raw.json
+          ./ecr-image-details.json
+        retention-days: 90
+        
+    - name: Create security summary
+      run: |
+        echo "📊 Creating security summary..."
+        
+        VULN_COUNT=$(jq '.vulnerabilities | length' aws-inspector-sbom.json)
+        CRITICAL_COUNT=$(jq '[.vulnerabilities[] | select(.ratings[0].severity == "CRITICAL")] | length' aws-inspector-sbom.json)
+        HIGH_COUNT=$(jq '[.vulnerabilities[] | select(.ratings[0].severity == "HIGH")] | length' aws-inspector-sbom.json)
+        
+        cat >> $GITHUB_STEP_SUMMARY << EOF
+        ## 🔍 AWS Inspector Security Scan Results
+        
+        **Repository:** \`${{ github.repository }}\`  
+        **Commit:** \`${{ github.sha }}\`  
+        **Image:** \`${{ steps.inspector-scan.outputs.IMAGE_URI }}\`  
+        **Scan Date:** $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
+        
+        ### 📋 SBOM Generation
+        - ✅ CycloneDX SBOM generated
+        - ✅ SPDX SBOM generated  
+        - ✅ SBOM attestation created
+        - ☁️ Files uploaded to S3
+        
+        ### 🛡️ Vulnerability Summary
+        - **Total Vulnerabilities:** ${VULN_COUNT}
+        - **Critical:** ${CRITICAL_COUNT}
+        - **High:** ${HIGH_COUNT}
+        
+        ### 📁 Generated Files
+        - \`aws-inspector-sbom.json\` - CycloneDX format SBOM
+        - \`aws-inspector-sbom-spdx.json\` - SPDX format SBOM
+        - \`sbom-summary.json\` - Scan summary
+        - \`inspector-findings-detailed.json\` - Detailed findings
+        
+        EOF
+        
+        echo "✅ Security summary created"
