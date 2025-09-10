@@ -98,21 +98,24 @@ jobs:
         # Download and install AWS Inspector SBOM Generator
         wget https://amazon-inspector-sbomgen.s3.amazonaws.com/latest/linux/amd64/inspector-sbomgen.zip
         unzip inspector-sbomgen.zip
-        chmod +x inspector-sbomgen
+        
+        # Find the correct path to the binary
+        INSPECTOR_BINARY=$(find . -name "inspector-sbomgen" -type f)
+        chmod +x "$INSPECTOR_BINARY"
         
         # Generate SBOM for container image and scan with Inspector
-        ./inspector-sbomgen container --image $IMAGE_URI \
+        "$INSPECTOR_BINARY" container --image $IMAGE_URI \
           --scan-sbom \
           --aws-region ${{ env.AWS_REGION }} \
           --scan-sbom-output-format cyclonedx \
           --outfile inspector-cyclonedx-sbom.json
         
         # Generate SBOM without scanning for backup
-        ./inspector-sbomgen container --image $IMAGE_URI \
+        "$INSPECTOR_BINARY" container --image $IMAGE_URI \
           --outfile inspector-sbom-only.json
         
         # Generate SBOM from source directory
-        ./inspector-sbomgen directory --path ./course-site-with-nodejs-backend/server-nodejs \
+        "$INSPECTOR_BINARY" directory --path ./course-site-with-nodejs-backend/server-nodejs \
           --outfile source-inspector-sbom.json
         
         echo "✅ SBOM generated using AWS Inspector SBOM Generator"
