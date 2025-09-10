@@ -165,23 +165,6 @@ jobs:
         
         echo "✅ Enhanced SBOM ready with AWS Inspector integration"
         
-    - name: Upload SBOM to S3
-      run: |
-        echo "☁️ Uploading SBOM to S3..."
-        BUCKET_NAME="sbom-int-inspector-data"
-        
-        if [ ! -z "$BUCKET_NAME" ]; then
-          # Upload all Inspector SBOM files to S3
-          aws s3 cp inspector-cyclonedx-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/inspector-cyclonedx-sbom.json" || true
-          aws s3 cp inspector-sbom-only.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/inspector-sbom-only.json" || true
-          aws s3 cp source-inspector-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/source-inspector-sbom.json" || true
-          aws s3 cp nodejs-dependencies-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/nodejs-dependencies-sbom.json" || true
-          aws s3 cp enhanced-aws-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/enhanced-aws-sbom.json"
-          
-          echo "✅ SBOM files uploaded to S3"
-        else
-          echo "ℹ️ S3 bucket not configured, skipping upload"
-        fi
         
     - name: Attest AWS Inspector SBOM
       uses: actions/attest-sbom@v1
