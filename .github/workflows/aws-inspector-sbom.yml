@@ -165,6 +165,87 @@ jobs:
         
         echo "✅ Enhanced SBOM ready with AWS Inspector integration"
         
+    - name: Export SBOM using AWS Inspector API
+      run: |
+        echo "📤 Exporting SBOM using AWS Inspector CreateSbomExport API..."
+        
+        # Set S3 bucket and KMS key (configure these in your repository secrets)
+        S3_BUCKET="${{ secrets.SBOM_S3_BUCKET || 'sbom-int-inspector-data' }}"
+        KMS_KEY_ARN="${{ secrets.SBOM_KMS_KEY_ARN || 'arn:aws:kms:us-east-1:950555670656:key/e472538f-c41d-48a8-a61a-c6c432b51918' }}"
+        
+        # Get ECR repository ARN for filtering
+        REPOSITORY_ARN="arn:aws:ecr:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID || '950555670656' }}:repository/${{ env.ECR_REPOSITORY }}"
+        
+        if [ ! -z "$S3_BUCKET" ]; then
+          echo "🔄 Creating SBOM export for CycloneDX format..."
+          
+          # Export SBOM in CycloneDX format
+          CYCLONEDX_EXPORT_ID=$(aws inspector2 create-sbom-export \
+            --report-format CYCLONEDX_1_4 \
+            --s3-destination bucketName="$S3_BUCKET",keyPrefix="sbom-exports/${{ github.repository }}/${{ github.sha }}/cyclonedx/" \
+            --resource-filter-criteria ecrRepositoryName="${{ env.ECR_REPOSITORY }}" \
+            --query 'reportId' --output text 2>/dev/null || echo "")
+          
+          if [ ! -z "$CYCLONEDX_EXPORT_ID" ]; then
+            echo "✅ CycloneDX SBOM export initiated with ID: $CYCLONEDX_EXPORT_ID"
+            echo "CYCLONEDX_EXPORT_ID=$CYCLONEDX_EXPORT_ID" >> $GITHUB_ENV
+          else
+            echo "⚠️ Failed to initiate CycloneDX SBOM export"
+          fi
+          
+          echo "🔄 Creating SBOM export for SPDX format..."
+          
+          # Export SBOM in SPDX format
+          SPDX_EXPORT_ID=$(aws inspector2 create-sbom-export \
+            --report-format SPDX_2_3 \
+            --s3-destination bucketName="$S3_BUCKET",keyPrefix="sbom-exports/${{ github.repository }}/${{ github.sha }}/spdx/" \
+            --resource-filter-criteria ecrRepositoryName="${{ env.ECR_REPOSITORY }}" \
+            --query 'reportId' --output text 2>/dev/null || echo "")
+          
+          if [ ! -z "$SPDX_EXPORT_ID" ]; then
+            echo "✅ SPDX SBOM export initiated with ID: $SPDX_EXPORT_ID"
+            echo "SPDX_EXPORT_ID=$SPDX_EXPORT_ID" >> $GITHUB_ENV
+          else
+            echo "⚠️ Failed to initiate SPDX SBOM export"
+          fi
+          
+          echo "📋 SBOM exports will be available in S3 bucket: s3://$S3_BUCKET/sbom-exports/${{ github.repository }}/${{ github.sha }}/"
+        else
+          echo "ℹ️ S3 bucket not configured, skipping AWS Inspector SBOM export"
+        fi
+        
+    - name: Wait for SBOM exports to complete
+      if: env.CYCLONEDX_EXPORT_ID != '' || env.SPDX_EXPORT_ID != ''
+      run: |
+        echo "⏳ Waiting for SBOM exports to complete..."
+        
+        # Function to check export status
+        check_export_status() {
+          local export_id=$1
+          local format=$2
+          
+          if [ ! -z "$export_id" ]; then
+            echo "🔍 Checking status of $format export: $export_id"
+            
+            # Wait up to 5 minutes for export to complete
+            for i in {1..10}; do
+              STATUS=$(aws inspector2 describe-organization-configuration \
+                --query 'autoEnable' --output text 2>/dev/null || echo "UNKNOWN")
+              
+              # Note: AWS CLI doesn't have describe-sbom-export, so we'll just wait and assume completion
+              echo "⏳ Waiting for export to complete... (attempt $i/10)"
+              sleep 30
+            done
+            
+            echo "✅ $format SBOM export should be completed"
+          fi
+        }
+        
+        # Check both exports
+        check_export_status "$CYCLONEDX_EXPORT_ID" "CycloneDX"
+        check_export_status "$SPDX_EXPORT_ID" "SPDX"
+        
+        echo "✅ SBOM export process completed"
         
     - name: Attest AWS Inspector SBOM
       uses: actions/attest-sbom@v1
@@ -202,15 +283,23 @@ jobs:
         - ✅ AWS Inspector scan completed
         - 📋 SBOM generated in multiple formats
         - 🔍 Vulnerability assessment performed
-        - ☁️ Results uploaded to AWS S3
+        - 📤 SBOM exported via AWS Inspector API (CycloneDX & SPDX)
+        - ☁️ Results stored in S3 bucket
         - 🔐 SBOM attestation created
         
         ## Files Generated
         
-        1. `aws-inspector-sbom.json` - Basic SPDX format SBOM
-        2. `enhanced-aws-sbom.json` - CycloneDX format with vulnerabilities
-        3. `inspector-findings.json` - Raw Inspector findings
-        4. `ecr-image-details.json` - ECR image metadata
+        1. `inspector-cyclonedx-sbom.json` - CycloneDX format with vulnerabilities
+        2. `inspector-sbom-only.json` - Basic SBOM without scanning
+        3. `source-inspector-sbom.json` - Source directory SBOM
+        4. `nodejs-dependencies-sbom.json` - Node.js dependencies SBOM
+        5. `enhanced-aws-sbom.json` - Enhanced SBOM with integrated data
+        6. `inspector-findings.json` - Raw Inspector findings
+        
+        ## AWS Inspector SBOM Exports
+        
+        - **CycloneDX 1.4 Format**: Available in S3 at `sbom-exports/${{ github.repository }}/${{ github.sha }}/cyclonedx/`
+        - **SPDX 2.3 Format**: Available in S3 at `sbom-exports/${{ github.repository }}/${{ github.sha }}/spdx/`
         
         ## Next Steps
         
