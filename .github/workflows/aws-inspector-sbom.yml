@@ -90,87 +90,88 @@ jobs:
           
         echo "✅ AWS Inspector scan completed"
         
-    - name: Generate SBOM with AWS Inspector
+    - name: Generate real SBOM using Syft
       run: |
-        echo "📋 Generating SBOM with AWS Inspector..."
+        echo "📋 Generating real SBOM using Syft..."
         IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
         
-        # Get image details and create SBOM
-        aws ecr describe-images \
-          --repository-name ${{ env.ECR_REPOSITORY }} \
-          --image-ids imageTag=latest \
-          --output json > ecr-image-details.json
-          
-        # Create SPDX SBOM format
-        cat > aws-inspector-sbom.json << 'EOF'
-        {
-          "spdxVersion": "SPDX-2.3",
-          "dataLicense": "CC0-1.0",
-          "SPDXID": "SPDXRef-DOCUMENT",
-          "name": "AWS Inspector SBOM for server-nodejs",
-          "documentNamespace": "https://github.com/${{ github.repository }}/aws-inspector-sbom/${{ github.sha }}",
-          "creationInfo": {
-            "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "creators": ["Tool: AWS Inspector", "Tool: GitHub Actions"]
-          },
-          "packages": []
-        }
-        EOF
+        # Install Syft for SBOM generation
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
         
-        # Extract package information from ECR
-        aws ecr get-repository-policy --repository-name ${{ env.ECR_REPOSITORY }} --output json > repository-policy.json 2>/dev/null || echo "{}" > repository-policy.json
+        # Generate SBOM from the built Docker image
+        syft $IMAGE_URI -o cyclonedx-json=cyclonedx-sbom.json
+        syft $IMAGE_URI -o spdx-json=spdx-sbom.json
+        syft $IMAGE_URI -o syft-json=syft-sbom.json
         
-        echo "✅ AWS Inspector SBOM generated"
+        # Also generate SBOM from source code
+        syft ./course-site-with-nodejs-backend/server-nodejs -o cyclonedx-json=source-cyclonedx-sbom.json
         
-    - name: Enhanced SBOM generation with Inspector data
+        echo "✅ Real SBOM generated using Syft"
+        
+    - name: Generate Node.js dependency SBOM
       run: |
-        echo "📋 Creating comprehensive SBOM with Inspector findings..."
+        echo "📋 Generating Node.js dependency SBOM..."
+        
+        # Install CycloneDX Node.js tool
+        npm install -g @cyclonedx/cyclonedx-npm
+        
+        # Generate SBOM from package.json
+        cd course-site-with-nodejs-backend/server-nodejs
+        cyclonedx-npm --output-file ../../nodejs-dependencies-sbom.json
+        cd ../..
+        
+        echo "✅ Node.js dependency SBOM generated"
+        
+    - name: Merge SBOMs with Inspector vulnerability data
+      run: |
+        echo "📋 Merging real SBOMs with Inspector vulnerability data..."
         
         # Install jq for JSON processing
         sudo apt-get update && sudo apt-get install -y jq
         
-        # Create enhanced SBOM with vulnerability data
-        cat > enhanced-aws-sbom.json << EOF
-        {
-          "bomFormat": "CycloneDX",
-          "specVersion": "1.4",
-          "serialNumber": "urn:uuid:$(uuidgen)",
-          "version": 1,
-          "metadata": {
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "tools": [
-              {
-                "vendor": "AWS",
-                "name": "Inspector",
-                "version": "2.0"
-              }
-            ],
-            "component": {
-              "type": "container",
-              "name": "server-nodejs",
-              "version": "${{ github.sha }}",
-              "purl": "pkg:docker/${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${{ github.sha }}"
-            }
-          },
-          "components": [],
-          "vulnerabilities": []
-        }
-        EOF
+        # Use the real CycloneDX SBOM as base and enhance with Inspector data
+        if [ -f cyclonedx-sbom.json ]; then
+          cp cyclonedx-sbom.json enhanced-aws-sbom.json
+        else
+          # Fallback to Node.js dependencies SBOM
+          cp nodejs-dependencies-sbom.json enhanced-aws-sbom.json
+        fi
         
-        # Process Inspector findings if available
+        # Process Inspector findings and merge with real SBOM
         if [ -f inspector-findings.json ] && [ -s inspector-findings.json ]; then
-          echo "Processing Inspector findings..."
+          echo "Processing Inspector findings and merging with real SBOM..."
+          
           # Check if the JSON is an array or has a findings property
           if jq -e 'type == "array"' inspector-findings.json > /dev/null 2>&1; then
             cp inspector-findings.json processed-findings.json
           else
             jq '.findings // []' inspector-findings.json > processed-findings.json
           fi
+          
+          # Merge Inspector vulnerabilities into the real SBOM
+          jq --argjson findings "$(cat processed-findings.json)" '
+            .vulnerabilities = (.vulnerabilities // []) + [
+              $findings[] | {
+                "id": (.findingArn // "unknown"),
+                "source": {
+                  "name": "AWS Inspector",
+                  "url": "https://console.aws.amazon.com/inspector/v2/"
+                },
+                "ratings": [{
+                  "source": {"name": "AWS Inspector"},
+                  "severity": (.severity // "UNKNOWN"),
+                  "score": (.inspectorScore // 0)
+                }],
+                "description": (.description // ""),
+                "recommendation": (.remediation.recommendation.text // "")
+              }
+            ]
+          ' enhanced-aws-sbom.json > temp-sbom.json && mv temp-sbom.json enhanced-aws-sbom.json
         else
-          echo "[]" > processed-findings.json
+          echo "No Inspector findings to merge"
         fi
         
-        echo "✅ Enhanced SBOM with Inspector data created"
+        echo "✅ Real SBOM enhanced with Inspector vulnerability data"
         
     - name: Upload SBOM to S3
       run: |
@@ -178,10 +179,12 @@ jobs:
         BUCKET_NAME="${{ secrets.AWS_S3_SBOM_BUCKET }}"
         
         if [ ! -z "$BUCKET_NAME" ]; then
-          # Upload all SBOM files to S3
-          aws s3 cp aws-inspector-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/aws-inspector-sbom.json"
+          # Upload all real SBOM files to S3
+          aws s3 cp cyclonedx-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/cyclonedx-sbom.json" || true
+          aws s3 cp spdx-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/spdx-sbom.json" || true
+          aws s3 cp nodejs-dependencies-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/nodejs-dependencies-sbom.json" || true
           aws s3 cp enhanced-aws-sbom.json "s3://$BUCKET_NAME/sbom/${{ github.repository }}/${{ github.sha }}/enhanced-aws-sbom.json"
-          aws s3 cp inspector-findings.json "s3://$BUCKET_NAME/findings/${{ github.repository }}/${{ github.sha }}/inspector-findings.json"
+          aws s3 cp inspector-findings.json "s3://$BUCKET_NAME/findings/${{ github.repository }}/${{ github.sha }}/inspector-findings.json" || true
           
           echo "✅ SBOM files uploaded to S3"
         else
@@ -199,10 +202,13 @@ jobs:
       with:
         name: aws-inspector-sbom-${{ github.sha }}
         path: |
-          ./aws-inspector-sbom.json
+          ./cyclonedx-sbom.json
+          ./spdx-sbom.json
+          ./syft-sbom.json
+          ./source-cyclonedx-sbom.json
+          ./nodejs-dependencies-sbom.json
           ./enhanced-aws-sbom.json
           ./inspector-findings.json
-          ./ecr-image-details.json
           ./processed-findings.json
         retention-days: 90
         
