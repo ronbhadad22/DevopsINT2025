@@ -109,11 +109,30 @@ def bad_average(a, b, c):
 
 
 def best_student(grades):
-    """
-    1 Kata
-    Return student with highest grade.
-    """
+    if not grades:
+        return None  # Handle the case of an empty dictionary
+    
     return max(grades, key=grades.get)
+
+# --- Example Usage ---
+if __name__ == "__main__":
+    # Sample data: a dictionary of students and their grades
+    student_grades = {
+        "Alice": 85,
+        "Bob": 92,
+        "Charlie": 78,
+        "Diana": 92  # Bob and Diana have the same highest grade
+    }
+
+    # Find the best student
+    top_student = best_student(student_grades)
+
+    # Print the result
+    if top_student:
+        print(f"The student with the highest grade is: {top_student}")
+        print(f"Their grade is: {student_grades[top_student]}")
+    else:
+        print("No students found in the grades dictionary.")
 
 
 def print_dict_as_table(some_dict):

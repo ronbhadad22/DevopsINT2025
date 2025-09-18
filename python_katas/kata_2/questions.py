@@ -1,58 +1,56 @@
-def valid_parentheses(s):
-   if s== ('[[{()}](){}]'):
-       return True
-   if s ==(']}'):
-       return False
-valid_parentheses("[[{()}](){}]")
-valid_parentheses("]}")
-
-
- 
-
-
-"""
+def valid_parentheses(s: str) -> bool:
+    """
     3 Kata
 
     This function gets a string containing just the characters '(', ')', '{', '}', '[' and ']',
     and determines if the input string is valid.
 
     An input string is valid if:
-        Open brackets must be closed by the same type of brackets.
-        Open brackets must be closed in the correct order.
+        - Open brackets must be closed by the same type of brackets.
+        - Open brackets must be closed in the correct order.
 
     e.g.
     s = '[[{()}](){}]'  -> True
-    s = ']}'          -> False
+    s = ']}'            -> False
     """
-pass
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+
+    for char in s:
+        if char in "([{":
+            stack.append(char)
+        elif char in ")]}":
+            if not stack or stack[-1] != pairs[char]:
+                return False
+            stack.pop()
+    return len(stack) == 0
 
 
-def fibonacci_fixme(n):
-    a, b = 1, 1
-    for _ in range(2, n):
-        a, b = b, a + b
-    return b
-
-
-   
+def fibonacci_fixme(n: int) -> int:
     """
     2 Kata
 
     A Fibonacci sequence is the integer sequence of 1, 1, 2, 3, 5, 8, 13....
     The first two terms are 1 and 1. All other terms are obtained by adding the preceding two terms.
 
-    This function should return the n'th element of fibonacci sequence. As following:
+    This function returns the n'th element of the Fibonacci sequence.
 
-    fibonacci_fixme(1) -> 1
-    fibonacci_fixme(2) -> 1
-    fibonacci_fixme(3) -> 2
-    fibonacci_fixme(4) -> 3
-    fibonacci_fixme(5) -> 5
-
-    But it doesn't (it has some bad lines in it...)
-    You should (1) correct the for statement and (2) swap two lines, so that the correct fibonacci element will be returned
+    Examples:
+        fibonacci_fixme(1) -> 1
+        fibonacci_fixme(2) -> 1
+        fibonacci_fixme(3) -> 2
+        fibonacci_fixme(4) -> 3
+        fibonacci_fixme(5) -> 5
     """
-pass
+    if n <= 0:
+        raise ValueError("n must be a positive integer")
+    if n in (1, 2):
+        return 1
+
+    a, b = 1, 1
+    for _ in range(2, n):
+        a, b = b, a + b
+    return b
 
 
 import os
